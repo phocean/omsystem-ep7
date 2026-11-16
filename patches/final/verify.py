@@ -40,7 +40,7 @@ sys.modules.pop('build', None)
 import ep7_buttons_verify as V  # noqa: E402
 OV = load('final_omc_verify', 'patches/omc_buttons/verify.py')
 BT, B = V.BT, V.B
-MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version', 'dial_expcomp']
+MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version', 'dial_expcomp', 'profile_lsf']
 # data / code the button + LCD features read (CPU addresses, end exclusive)
 WINDOWS = {'validator API': (0x602b9c00, 0x602ba600), 'validator records': (0x604cc98c, 0x604cc98c + 1333 * 20),
            'button lists': (0x604cae00, 0x604cb040), 'dispatcher': (0x60cc8700, 0x60cc8c00),

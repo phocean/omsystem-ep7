@@ -1,0 +1,14 @@
+{
+ "components": [
+  "0x100"
+ ],
+ "edits": [
+  {
+   "kind": "0x100",
+   "addr": "0x6043c24e",
+   "expect": "0f",
+   "new": "0e",
+   "why": "Quality dependency rules of sid 10 (results list 0x6043c24c, shared by its 30 rules): when a profile rule fires, RAW only (external value 0) is rewritten to 15 (JPEG slot 2 + RAW, shown LF+RAW) in stock; now to 14 (JPEG slot 1 + RAW, the first slot of the quality list, LSF on this camera). Pair {0 -> 15} becomes {0 -> 14}."
+  }
+ ]
+}
