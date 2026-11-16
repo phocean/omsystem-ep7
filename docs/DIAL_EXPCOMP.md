@@ -5,7 +5,7 @@ This patch turns the second choice into {Shutter, Exposure comp}. In mode M with
 compensation moves the automatic ISO, so the free dial sets the ISO indirectly. With a lens that has electronic contacts, pick
 the first choice to keep FNo. on the dial.
 
-## What changes (2 edits, 3 bytes; `patches/dial_expcomp/edits.json`)
+## What changes (2 edits covering 3 bytes, 2 of which change; `patches/dial_expcomp/edits.json`)
 
 | Address | Stock | Patched | Meaning |
 |---|---|---|---|

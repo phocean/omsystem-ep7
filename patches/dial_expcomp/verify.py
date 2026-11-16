@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Static check of the E-P7 1.1 `dial_expcomp` patch (patches/dial_expcomp/edits.json). Offline, no emulator.
 
-What it changes (2 edits, 3 bytes): in Custom Menu B > "Dial function M/B" the second choice {Shutter, FNo.} becomes
+What it changes (2 edits covering 3 bytes, 2 of which change): in Custom Menu B > "Dial function M/B" the second choice {Shutter, FNo.} becomes
 {Shutter, Exposure comp} (function numbers 4 and 2) and its label becomes the exposure-compensation icon.
 
 Checks (exit 0 = all PASS):
@@ -48,7 +48,7 @@ def u16(b, a): return struct.unpack_from('<H', b, a - BASE)[0]
 def raw(b, a, n): return bytes(b[a - BASE:a - BASE + n])
 
 
-REC = {'P': 0x604ccd38, 'A': 0x604ccd4c, 'S': 0x604ccd60, 'M': 0x604ccd74}   # sids 70, 72, 74, 76
+REC = {'P': 0x604ccd38, 'A': 0x604ccd4c, 'S': 0x604ccd60, 'M': 0x604ccd74}   # records of sids 70, 74, 72, 76 (shutter priority is the record 0x604ccd60)
 m = REC['M']
 rep('sid 76 record unchanged', raw(stock, m, 20) == raw(img, m, 20), raw(img, m, 20).hex())
 lp, ap, size, es = u32(img, m + 4), u32(img, m + 8), u16(img, m + 12), u16(img, m + 14)
