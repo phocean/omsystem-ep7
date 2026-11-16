@@ -29,15 +29,15 @@ minimal: stock
 jpeg_always_stock_emu:
 	$(JA_ENV) $(PY) -I patches/jpeg_always/emu_verify.py --base stock
 
-# FINAL firmware (docs/FINAL_BUILD.md): stock + jpeg_always + lever_nomenu + lcd_tint + more button functions (omc_buttons + btn_arrows) + fw_version (Setup > Firmware: "phocean" / "1.0").
+# FINAL firmware (docs/FINAL_BUILD.md): stock + jpeg_always + lever_nomenu + lcd_tint + more button functions (omc_buttons + btn_arrows) + dial_expcomp (M/B dial: Shutter / Exp comp) + fw_version (Setup > Firmware: "phocean" / "1.0").
 # Nothing else of Caduceus. 0x101 stays the stock payload. The package hashes are pinned below (a change is refused, nothing written).
 #   MAIN : the main checkout, which holds external/oly_fw_analysis (emulator engine); default = this directory.
 #   PYNP : a Python with numpy (tools/ep7_verify_lcd_tint.py and patches/final/verify.py import it); default = $(PY).
 MAIN  ?= $(CURDIR)
 PYNP  ?= $(PY)
 EMU_ENV = EP7_MAIN_REPO=$(MAIN) PYTHONPATH=$(MAIN)/external/oly_fw_analysis/tools
-FINAL_MODULES = --module jpeg_always --module lever_nomenu --module lcd_tint --module omc_buttons --module btn_arrows --module fw_version
-FINAL_SHA         = 582c23f1e66f76ff07f6b20c379253e95e224b862337c1010366c3643325a4dc
+FINAL_MODULES = --module jpeg_always --module lever_nomenu --module lcd_tint --module omc_buttons --module btn_arrows --module fw_version --module dial_expcomp
+FINAL_SHA         = 8abdac866cc54fc3ad7dddbfab6e95e5e00421876823500444ce357081627899
 FINAL_RESTORE_SHA = 963f4dfe560e29216862c96284c92225f49977fd831a2ed60fa3ebbddf6d2327
 final: stock
 	$(JA_ENV) $(PY) -I patches/jpeg_always/build.py --base stock --out generated/jpeg_always_stock/edits.json
@@ -57,6 +57,7 @@ final: stock
 	$(EMU_ENV) $(PYNP) tools/ep7_verify_lcd_tint.py generated/final/edits.json --base generated/final/without_lcd_tint.json
 	$(EMU_ENV) $(PY) patches/lever_nomenu/verify.py
 	$(EMU_ENV) $(PY) patches/fw_version/verify.py generated/final/edits.json
+	$(PY) -I patches/dial_expcomp/verify.py
 	$(EMU_ENV) $(PYNP) patches/final/verify.py generated/final/edits.json generated/final/without_omc_buttons.json --pkg out/final \
 	  $(if $(wildcard releases/v0.29a/edits.json),--v029a releases/v0.29a/edits.json)
 	@cat out/final/SHA256SUMS

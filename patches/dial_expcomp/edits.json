@@ -1,0 +1,21 @@
+{
+ "components": [
+  "0x100"
+ ],
+ "edits": [
+  {
+   "kind": "0x100",
+   "addr": "0x604bb480",
+   "expect": "03",
+   "new": "02",
+   "why": "Dial function M/B (validator record 0x604ccd74, list 0x604bb43c): second entry {Shutter, FNo.} becomes {Shutter, Exposure comp}, the same entry as the shutter-priority record 0x604bb3bc has (second word 3 -> 2)."
+  },
+  {
+   "kind": "0x100",
+   "addr": "0x611d6d56",
+   "expect": "9302",
+   "new": "9202",
+   "why": "Dial M/B page, label list of the second dial (0x611d6d44), GUI value 8: label id 659 (FNo.) -> 658 (@A008@, exposure comp icon, the label the A/S pages use for that function)."
+  }
+ ]
+}

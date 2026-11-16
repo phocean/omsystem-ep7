@@ -74,6 +74,8 @@ STOCK_MODULES = {
                              (0x61242ff0, 0x61242ff9, 'title text'), (0x6115056c, 0x61150572, 'mode-42 record'),
                              (0x611bf7c8, 0x611bf7ca, 'sid 53 item kind'), (0x611bf7cc, 0x611bf7d0, 'sid 53 item text'),
                              (0x611ccf34, 0x611ccf36, 'sid 53 item2 kind'), (0x611ccf38, 0x611ccf3c, 'sid 53 item2 text')]},
+    'dial_expcomp': {'0x100': [(0x604bb480, 0x604bb481, 'M/B dial list, 2nd entry {Shutter, FNo.} -> {Shutter, Exp comp}'),
+                               (0x611d6d56, 0x611d6d58, 'M/B dial page label id (second dial, value 8)')]},
     'fw_version': {'0x100': [(0x60d7f271, 0x60d7f278, 'Firmware screen +940 setter call'), (0x60d7f2cd, 0x60d7f2d4, 'Firmware screen +300 setter call'),
                              (0x601e1c40, 0x601e1c64, 'fw_val (dead EVF step-10 B table)'), (0x6115d5e8, 0x6115d5f0, 'Body row label descriptor'),
                              (0x61242fc0, 0x61242fd0, 'label text')]},

@@ -26,7 +26,8 @@ only inside a declared `0x101` range; none is declared. Registered in `docs/CODE
 | omc_buttons | `patches/buttons/build.py` `edits()` | 7 | 64 | 40 | list 0x604cae3c-0x604cae6a (23 codes); records 0x604cda14 (2), 0x604cda20 (4), 0x604cda28 (2), 0x604cda34 (4), 0x604cda3c (2), 0x604cdae8 (4) |
 | btn_arrows | `patches/btn_arrows/build.py` `apply(version=None)` | 10 | 71 | 44 | list 0x604cb00e-0x604cb02e (14 codes); records 0x604cdadc (2), 0x604cdaf0 (2); rows 0x61242fe8-0x61242ff0; text "Right Fn" 0x61242ff0-0x61242ff9; mode-42 record 0x6115056c-0x61150572; item records 0x611bf7c8 (2), 0x611bf7cc (4), 0x611ccf34 (2), 0x611ccf38 (4) |
 | fw_version | `patches/fw_version/build.py` `apply(spec, "1.0", "phocean")` | 5 | 64 | 54 | setter calls 0x60d7f271, 0x60d7f2cd (7 B each); `fw_val` 0x601e1c40 (34 B, dead EVF table); row descriptor 0x6115d5e8 (8 B); text "phocean" 0x61242fc0 (8 B). Display only: Setup > Firmware, Body row shows title "phocean" and value "1.0" instead of "Body" / "1.1" |
-| **Total** | | **30** | **6173** | **770** (0x100) + **0** (0x101) | |
+| dial_expcomp | `patches/dial_expcomp/edits.json` | 2 | 3 | 2 | list byte 0x604bb480 (03 -> 02), label id 0x611d6d56 (93 02 -> 92 02). Custom B > Dial function M/B: second choice {Shutter, FNo.} becomes {Shutter, Exposure comp}, the same entry the shutter-priority record carries. See [DIAL_EXPCOMP.md](DIAL_EXPCOMP.md) |
+| **Total** | | **32** | **6176** | **772** (0x100) + **0** (0x101) | |
 
 (Written bytes count every byte of an edit; "differ" counts only the bytes whose value changes.)
 
@@ -87,13 +88,13 @@ Stock `OLY_E_142_1100_0000_0000.BIN`: `9d1610124ad98f6edae4540182205f06c9c703d90
 
 | File | SHA-256 |
 |---|---|
-| `out/final/DCOLYMP/E1429999.BIN` (52,428,800 B) | `582c23f1e66f76ff07f6b20c379253e95e224b862337c1010366c3643325a4dc` |
+| `out/final/DCOLYMP/E1429999.BIN` (52,428,800 B) | `8abdac866cc54fc3ad7dddbfab6e95e5e00421876823500444ce357081627899` |
 | `out/final/restore/E1429999.BIN` (the stock slice of 0x100 + 0x101; same file as `out/minimal/restore`) | `963f4dfe560e29216862c96284c92225f49977fd831a2ed60fa3ebbddf6d2327` |
-| decoded 0x100 payload of the final | `a7c8b14c62c82f62662b827f693e438a00d3f6ded753e55801d0f2913dbb1226` |
+| decoded 0x100 payload of the final | `c9b60ade75295d727fa5e319141a8012e3b10fd0f85d7ca500bb98d63a1ae7f4` |
 | decoded 0x100 payload of the stock | `5dd9af164b4590c7e82f6905c919b3cc450bb58f2d5742ab2a0e3a4eb2e26190` |
 | decoded 0x101 payload (final == stock) | `8606cb90e06b67aee31a1b4319b585905b66e4e3ee29c903bd328aa33b362868` |
 
-The package hash is pinned in the Makefile (`FINAL_SHA`, `FINAL_RESTORE_SHA`): a different build is refused and nothing is written. The final differs from `out/minimal` (`0812d765...3882`) by 651 bytes of 0x100; 0x101 is identical.
+The package hash is pinned in the Makefile (`FINAL_SHA`, `FINAL_RESTORE_SHA`): a different build is refused and nothing is written. The final differs from `out/minimal` (`0812d765...3882`) by 653 bytes of 0x100; 0x101 is identical.
 Check the file on the card against the first hash before flashing.
 
 ## 5. Risks and what was not established

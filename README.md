@@ -19,6 +19,7 @@ firmware uses and starts a new history (see [NOTICE](NOTICE)).
 | JPEG only on COLOR / MONO profiles | A COLOR or MONO profile never saves a RAW file, whatever the image-quality menu says. Always on, no option, nothing read from the SD card | `patches/jpeg_always`, [docs/JPEG_ALWAYS.md](docs/JPEG_ALWAYS.md) |
 | LCD colour fix | Corrects the colour tint of the back screen (data table of the panel driver) | `patches/lcd_tint` |
 | More button functions | Longer function lists for the Fn, REC, right and bottom buttons (Custom Menu > Button Function) | `patches/buttons`, `patches/omc_buttons`, `patches/btn_arrows`, [docs/OMC_FEATURES.md](docs/OMC_FEATURES.md) |
+| M/B dial | In Custom B > Dial function M/B the second choice becomes Shutter / Exposure comp (with ISO Auto it moves the auto ISO) | `patches/dial_expcomp`, [docs/DIAL_EXPCOMP.md](docs/DIAL_EXPCOMP.md) |
 | Version label | Setup > Firmware shows "phocean" / "1.0" (display only) | `patches/fw_version` |
 
 [docs/FINAL_BUILD.md](docs/FINAL_BUILD.md) lists every changed byte range and the expected hashes.

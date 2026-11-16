@@ -41,7 +41,7 @@ BA = load('final_btn_arrows', 'patches/btn_arrows/build.py')
 FW = load('final_fw_version', 'patches/fw_version/build.py')
 import fork_build as FB  # noqa: E402
 
-MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version']
+MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version', 'dial_expcomp']
 LABEL, VERSION = 'phocean', '1.0'     # Setup > Firmware, Body row: title and value (display only; the box is narrow, keep both short)
 B = 0x60020020
 
@@ -75,6 +75,8 @@ def build(jpeg_spec, stock, label=LABEL, version=VERSION):
         die('--jpeg is not the --base stock build of jpeg_always')
     lever = json.loads((ROOT / 'patches/lever_nomenu/edits.json').read_text())
     edits += [dict(e, source='patches/lever_nomenu') for e in lever['edits']]
+    dial = json.loads((ROOT / 'patches/dial_expcomp/edits.json').read_text())
+    edits += [dict(e, source='patches/dial_expcomp') for e in dial['edits']]
     edits += LT.edits(LT.DEFAULT_PCT, LT.DEFAULT_SPAN, stock)
     pseudo = {'edits': omc_edits(stock), 'buttons': BT.spec()['buttons']}
     pseudo = BA.apply(pseudo, version=None)           # converts the arrow part to btn_arrows, adds rows / record / title
@@ -115,7 +117,7 @@ def checks(spec, stock):
         for lo, hi in mine:
             if not any(dl <= lo and hi <= dh for dl, dh in decl):
                 die(f'module {m}: edit {lo:#x}-{hi:#x} is outside the ranges declared in fork_build.STOCK_MODULES')
-        if m in ('lcd_tint', 'omc_buttons', 'btn_arrows') and sorted(mine) != sorted(decl):
+        if m in ('lcd_tint', 'omc_buttons', 'btn_arrows', 'dial_expcomp') and sorted(mine) != sorted(decl):
             die(f'module {m}: derived ranges differ from fork_build.STOCK_MODULES: {sorted(mine)} / {sorted(decl)}')
     # sec-6 tail (btn_arrows rows + title) is FF in stock and inside the section load (end 0x61243000)
     if set(stock[0x61242fe0 - B:0x61243000 - B]) != {0xff}:
