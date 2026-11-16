@@ -109,3 +109,15 @@ Check the file on the card against the first hash before flashing.
 - **Flash path.** The camera currently flashed has Caduceus v0.29a (+ lever + jpeg_only) and a modified `0x101`. This package writes `0x100` and `0x101` in full (`0x101` = stock). Whether the updater accepts a stock-based package from a Caduceus-flashed camera was not tried by us (`docs/JPEG_ALWAYS.md` section 7). One change per flash, restore file ready (`docs/INSTALL.md`).
 - Old settings: Caduceus BUNDLES.BIN / LOOKS.BIN on the card are not read by this firmware. Settings stored by the camera that only Caduceus could set are not checked (section 2).
 - Not run here: `patches/jpeg_always/emu_verify.py --base stock` on the stock-only image (unchanged, `make jpeg_always_stock_emu`).
+
+## Two-step install (security review of the code module)
+
+`dial_iso` is the only code module of the final (a 60-byte stub in the FF tail of section 1 and a 9-byte hook in the dial routine). The review
+recommends flashing the data modules first, then the code alone, so that a fault can be attributed:
+
+1. `make final` then `make final_nocode` -> `out/final_nocode/DCOLYMP/E1429999.BIN`, SHA-256 `dc323e32dc65d67e39b11b10a01d111bd16837a25ea95ce29dd5f614e68b8f6c`
+   (the final without `dial_iso`: 774 bytes differ from stock, 0x101 stock).
+2. `out/final/DCOLYMP/E1429999.BIN` (SHA-256 above) adds exactly the 69 bytes of `dial_iso`.
+
+The restore file is the same for both (`963f4dfe...2327`).
+

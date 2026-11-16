@@ -7,7 +7,7 @@
 # If Python 3.15 cannot open network sockets on your Mac, use: make stock PY=/usr/bin/python3
 PY   ?= python3
 
-.PHONY: stock jpeg_always_stock minimal jpeg_always_stock_emu final final_emu clean
+.PHONY: stock jpeg_always_stock minimal jpeg_always_stock_emu final final_nocode final_emu clean
 
 stock:
 	$(PY) tools/fork_build.py stock
@@ -63,6 +63,16 @@ final: stock
 	$(EMU_ENV) $(PYNP) patches/final/verify.py generated/final/edits.json generated/final/without_omc_buttons.json --pkg out/final \
 	  $(if $(wildcard releases/v0.29a/edits.json),--v029a releases/v0.29a/edits.json)
 	@cat out/final/SHA256SUMS
+
+# FINAL without the code module dial_iso (data modules only): the first flash of a two-step install (docs/FINAL_BUILD.md).
+# Run `make final` first (it writes generated/final/edits.json and verifies every module).
+FINAL_NOCODE_MODULES = --module jpeg_always --module lever_nomenu --module lcd_tint --module omc_buttons --module btn_arrows --module fw_version --module dial_expcomp --module profile_lsf
+final_nocode:
+	$(PY) -I patches/final/build.py --jpeg generated/jpeg_always_stock/edits.json --without dial_iso --out generated/final/without_dial_iso.json
+	rm -rf out/final_nocode
+	$(PY) tools/fork_build.py build --base stock --spec generated/final/without_dial_iso.json $(FINAL_NOCODE_MODULES) \
+	  --expect-restore-sha256 $(FINAL_RESTORE_SHA) --out out/final_nocode
+	@cat out/final_nocode/SHA256SUMS
 
 # Emulator test of the jpeg_always stub inside the FINAL image (about 1.5 to 7 minutes).
 final_emu:
