@@ -40,7 +40,7 @@ for e in spec['edits']:
     rep(f'stock bytes at {e["addr"]}', stock[a:a + len(n)].hex() == e['expect'], e['expect'])
     img[a:a + len(n)] = n
 diff = [BASE + i for i in range(len(stock)) if stock[i] != img[i]]
-rep('patch differs from stock only at 0x604bb480 and 0x611d6d56-57', diff == [0x604bb480, 0x611d6d56], str([hex(x) for x in diff]))
+rep('patch differs from stock only at 0x604bb480, 0x611d6d56 and 0x6044afda', diff == [0x604bb480, 0x611d6d56, 0x6044afda] or diff == [0x6044afda, 0x604bb480, 0x611d6d56], str([hex(x) for x in diff]))
 
 
 def u32(b, a): return struct.unpack_from('<I', b, a - BASE)[0]
@@ -71,5 +71,19 @@ rep('patched M/B label lists: first dial unchanged, second dial 8 -> 658', {k: [
 # the same label id 658 is what the A page draws for exposure comp in its lists (0x611d6c58 / 0x611d6c7c)
 a_items = [item(stock, a) for a in (0x611d6c58, 0x611d6c64, 0x611d6c70, 0x611d6c7c)]
 rep('A page labels: (12 -> 658, 5 -> 659, 12 -> 659, 5 -> 658)', [(v, k, i) for v, k, i in a_items] == [(12, 4, 658), (5, 4, 659), (12, 4, 659), (5, 4, 658)], str(a_items))
+
+# ---- third edit: rule engine group 0 for mode M no longer applies (sid 15210 compared with 2 instead of 0)
+CND = 0x6044afd0
+cnd = lambda b: [(u16(b, CND + 8 * i), u16(b, CND + 8 * i + 2)) for i in range(3)]
+rep('stock group-0 conditions: {sid 24 == 6}, {sid 15210 == 0}, {sid 24 == 9}', cnd(stock) == [(24, 6), (15210, 0), (24, 9)], str(cnd(stock)))
+rep('patched: {sid 24 == 6}, {sid 15210 == 2}', cnd(img)[:2] == [(24, 6), (15210, 2)], str(cnd(img)))
+pat = struct.pack('<I', CND); refs, i = [], 0
+while True:
+    i = stock.find(pat, i)
+    if i < 0:
+        break
+    refs.append(BASE + i)
+    i += 1
+rep('the condition block 0x6044afd0 has one abs32 reference (group 0 of the sid 2 entry 0x6045efac)', refs == [0x6044b518] and u32(stock, 0x6045efac + 4) == 0x6044b518, str([hex(x) for x in refs]))
 print('ALL PASS' if ok else 'SOME FAILED')
 sys.exit(0 if ok else 1)

@@ -16,6 +16,13 @@
    "expect": "9302",
    "new": "9202",
    "why": "Dial M/B page, label list of the second dial (0x611d6d44), GUI value 8: label id 659 (FNo.) -> 658 (@A008@, exposure comp icon, the label the A/S pages use for that function)."
+  },
+  {
+   "kind": "0x100",
+   "addr": "0x6044afda",
+   "expect": "00",
+   "new": "02",
+   "why": "Rule engine (base 0x6045efac, sid 2 = exposure compensation): the group 0 for mode M (sid 24 == 6) also requires sid 15210 == 0 (conditions at 0x6044afd0); the engine then returns 'disabled' (256) and the dial rule 69 refuses. The compared value becomes 2, which a 0/1 setting never has, so group 0 never applies in M; group 41 (sid 15210 == 1) is unchanged. Exposure comp is then accepted in M like in P/A/S (engine result 0 in the emulator)."
   }
  ]
 }

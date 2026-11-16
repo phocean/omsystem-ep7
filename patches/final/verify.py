@@ -40,7 +40,7 @@ sys.modules.pop('build', None)
 import ep7_buttons_verify as V  # noqa: E402
 OV = load('final_omc_verify', 'patches/omc_buttons/verify.py')
 BT, B = V.BT, V.B
-MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version', 'dial_expcomp', 'profile_lsf']
+MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version', 'dial_expcomp', 'profile_lsf', 'dial_iso']
 # data / code the button + LCD features read (CPU addresses, end exclusive)
 WINDOWS = {'validator API': (0x602b9c00, 0x602ba600), 'validator records': (0x604cc98c, 0x604cc98c + 1333 * 20),
            'button lists': (0x604cae00, 0x604cb040), 'dispatcher': (0x60cc8700, 0x60cc8c00),
@@ -134,16 +134,19 @@ def main():
         # C  no other Caduceus edit of v0.29a lies in a range claimed by a module of the final (shared tables, shared tail, ...)
         import fork_build as FB
         rel = json.loads(a.v029a.read_text())
-        hits = []
+        hits, known = [], []
         for m, comps in FB.STOCK_MODULES.items():
             for lo, hi, why in comps['0x100']:
                 for e in rel['edits']:
                     if e['kind'] == '0x100' and not e['addr'].startswith('off:'):
                         x, n = int(e['addr'], 16), len(e['new']) // 2
                         if x < hi and lo < x + n and e.get('source') != f'patches/{m}':
+                            if m == 'dial_iso':
+                                known.append((hex(lo), e['addr'], e.get('source')))   # documented: 0x60210900 is Caduceus' bundle table (docs/CODE_SPACE_MAP.md); this build never carries it
+                                continue
                             hits.append((m, hex(lo), e['addr'], e.get('source')))
-        report('C no other v0.29a edit overlaps a module range of the final', not hits, str(hits[:6]) if hits else
-               f'{sum(len(c["0x100"]) for c in FB.STOCK_MODULES.values())} ranges checked against {len(rel["edits"])} edits')
+        report('C no other v0.29a edit overlaps a module range of the final (except the documented dial_iso / Caduceus bundle table)', not hits, str(hits[:6]) if hits else
+               f'{sum(len(c["0x100"]) for c in FB.STOCK_MODULES.values())} ranges checked against {len(rel["edits"])} edits; {len(known)} known overlap(s) of dial_iso with v0.29a, not carried by this build')
         # X
         Img29 = V.Img(v29)
         ok = True

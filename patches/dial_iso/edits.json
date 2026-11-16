@@ -1,0 +1,23 @@
+{
+ "components": [
+  "0x100"
+ ],
+ "edits": [
+  {
+   "kind": "0x100",
+   "addr": "0x60cdc837",
+   "expect": "f1e3ddb0c3feffc008",
+   "new": "dcc94053ffcbcbcbcb",
+   "source": "patches/dial_iso",
+   "why": "dial_iso: in the dial routine 0x60cdc82c, `mov d0,a3 ; call 0x60cc8be9,[d2,d3],8` -> `jmp 0x60210900 ; nop x4` (resume 0x60cdc840). M mode, dial function FNo. (3) with no contact lens -> ISO (6)."
+  },
+  {
+   "kind": "0x100",
+   "addr": "0x60210900",
+   "expect": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "new": "f1e3a003c92c806dddebf0ab00a018a000c90b8018dddef0ab00a018a006c910dd2c9e0d00801c1ca000c9049f06f1dcddb982ab00c008dc09bfac00",
+   "source": "patches/dial_iso",
+   "why": "dial_iso: dl_fn (60 B, section-1 FF tail 0x60210900..0x6021093c): replays the displaced instructions, a3 = 6 when fn == 3 and mode key == 6 and 0x602ea74c() == 0, then jmp 0x60cdc840."
+  }
+ ]
+}
