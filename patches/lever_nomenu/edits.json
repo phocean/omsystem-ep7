@@ -1,0 +1,14 @@
+{
+ "components": [
+  "0x100"
+ ],
+ "edits": [
+  {
+   "kind": "0x100",
+   "addr": "0x60cd4a0a",
+   "expect": "c9",
+   "new": "ca",
+   "why": "Profile Control lever: skip the profile list request in startProfileSelect (bne -> bra 0x60cd4a71). The profile is still applied by setProfileLeverSwPosition (0x60cd4aa0)."
+  }
+ ]
+}

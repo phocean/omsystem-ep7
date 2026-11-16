@@ -1,0 +1,24 @@
+firmware-ep7 — a personal firmware for the Olympus / OM PEN E-P7 (firmware 1.1)
+Copyright 2026 Jean-Christophe Baptiste (changes and additions)
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This project is derived from Caduceus for the E-P7 (https://github.com/cakelesscoder/caduceus-ep7, Copyright 2026
+cakelesscoder, Apache-2.0); it is not a fork on GitHub and does not carry its history. Files from that project are kept
+here with changes: the build and package tools (caduceus.py,
+tools/build_package.py, tools/osd_extract.py, ...), the patch modules patches/buttons, patches/omc_buttons,
+patches/btn_arrows, patches/lcd_tint, patches/fw_version and the assembler helpers they call (patches/sd_bundles*),
+the documents in docs/ that come from that project, and releases/v0.29a/edits.json, kept only as a reference for the checks
+of the final build. The other upstream features (film looks, look editor, EP7MOD loader, grain, aspect, Control Panel, ...) were
+removed from this project. Modules added by this project: patches/lever_nomenu, patches/jpeg_always, patches/final,
+tools/fork_build.py, docs/FINAL_BUILD.md, docs/JPEG_ALWAYS.md.
+
+This repository contains no Olympus / OM Digital Solutions firmware. The build downloads the official firmware from
+OM's own server on the user's machine and checks its SHA-256.
+
+Third-party:
+- external/oly_fw_analysis (git submodule, fishcu, https://github.com/fishcu/oly_fw_analysis): PEN-F firmware research and MN103
+  emulator harness, used by the verification tools only. It keeps its own licence (GPL-3.0 for its code) and is not part of
+  this firmware.
+
+"Olympus", "PEN" and "OM SYSTEM" are trademarks of their respective owners. Not affiliated with OM Digital Solutions.

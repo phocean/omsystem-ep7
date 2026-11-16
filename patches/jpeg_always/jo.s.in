@@ -1,0 +1,88 @@
+/* E-P7 1.1 "JPEG always on COLOR / MONO profiles" (ep7-firmware, our own code). docs/JPEG_ALWAYS.md
+ *
+ * jo_get takes the place of the property getter 0x6005e971 at the reads of the "RAW in addition" flag of the capture
+ * path: key 0x8231 (slot 1, sid 22) and key 0x5141 (slot 2, sid 1105). Same contract as patches/wb/wb_get, patches/v025
+ * sc_get and patches/jpeg_only: every redirected site keeps its 7-byte `call <rel32>,[d2,d3],12`, only the rel32 points
+ * here, so we are entered on the getter's frame:  d0 = key, d1 = idx (0 at every site), a0 = 0  ->  d0 = value.
+ *
+ * ALWAYS ACTIVE, NO OPTION: nothing is read from the SD card, no tbl_off, no table, no data. The flag reads 0 (the file
+ * type stays JPEG) when ALL hold:
+ *   the key is 0x8231 or 0x5141;
+ *   the quality selector of the same slot (key 0x8141 for 0x8231, key 0x5131 for 0x5141, index 0) is not 3 or 4
+ *     (the capture code itself leaves 3 and 4 alone: it writes the file type 1 / 2 from the selector and never reads
+ *      the flag, so those stay exactly stock);
+ *   the picture mode (key 0x9481, 6 -> key 0x9d11, as the capture 0x602a856e does) is 11 (COLOR) or 12 (MONO).
+ * Anything else tail-jumps into the stock getter with the original d0 / d1 / a0 on the original frame (the getter
+ * overwrites d2 / d3 before reading them: 0x6005e971 `mov d1,d3; mov d0,d2`; its own `ret [d2,d3],12` returns to the site).
+ *
+ * The override path does not return a made-up frame: it makes the same getter call the site would have made (same key,
+ * idx, a0) and only replaces the returned value by 0, like sc_get / sh_get. So d1, a0, a1 and MDR are what the stock
+ * call leaves, and the only register that differs is d0.
+ * The property reads (selector, mode, mode 6) are the getter called directly with `call ...,[d2,d3],12` (d2 / d3 hold the
+ * key / idx and come back restored): no helper subroutine, so no extra frame. Stack: the deepest call is 12 B deeper than the
+ * stock getter call (measured by the emulator test, SP0-relative 44 B against 32 B; patches/jpeg_only measured 48 B); the real margin of
+ * the calling tasks is unknown.
+ * No stores, no mul / div / setlb, no data. Property keys here are all type 1 (unsigned byte). Keys are loaded as
+ * sign-extended imm16; exthu zero-extends before each getter call (the getter wants a 16-bit key).
+ */
+ .am33_2
+ .text
+ .global _start
+ .balign 4
+_start:
+jo_get:
+ mov d0,d2                        /* key (d2 / d3 are saved in the site's frame) */
+ exth d2                          /* compare as imm16 */
+ mov d1,d3                        /* idx */
+ cmp {key_flag1},d2               /* 0x8231 (sign-extended) */
+ beq jo_slot1
+ cmp {key_flag2},d2               /* 0x5141 */
+ bne jo_pass
+ mov {key_sel2},d0                /* 0x5131: slot 2 quality selector */
+ bra jo_sel
+jo_slot1:
+ mov {key_sel1},d0                /* 0x8141: slot 1 quality selector */
+jo_sel:
+ exthu d0
+ clr d1
+ mov 0,a0
+ call ep7_getter,[d2,d3],12       /* selector, idx 0 */
+ cmp 3,d0
+ beq jo_pass                      /* selector 3: file type 1, flag not read by the capture */
+ cmp 4,d0
+ beq jo_pass                      /* selector 4: RAW only, flag not read by the capture */
+ mov {k_pmode},d0
+ exthu d0
+ clr d1
+ mov 0,a0
+ call ep7_getter,[d2,d3],12       /* picture mode */
+ cmp 6,d0
+ bne jo_mode
+ mov {k_pmode6},d0
+ exthu d0
+ clr d1
+ mov 0,a0
+ call ep7_getter,[d2,d3],12       /* mode 6: re-resolved through 0x9d11 */
+jo_mode:
+ cmp 11,d0
+ beq jo_ovr
+ cmp 12,d0
+ beq jo_ovr                       /* COLOR / MONO profile */
+
+jo_pass:
+ mov d2,d0
+ exthu d0                         /* original key */
+ mov d3,d1                        /* original idx */
+ mov 0,a0
+ jmp ep7_getter                   /* stock getter on the site's frame */
+
+jo_ovr:
+ mov d2,d0
+ exthu d0                         /* original key */
+ mov d3,d1                        /* original idx */
+ mov 0,a0                         /* every redirected site passes a0 = 0 (checked by build.py) */
+ clr d2                           /* the value to return: flag off */
+ call ep7_getter,[d2,d3],12       /* the call the site would have made */
+ mov d2,d0
+ ret [d2,d3],12
+jo_end:
