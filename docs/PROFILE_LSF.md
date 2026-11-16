@@ -21,5 +21,5 @@ states where stock forces "slot 2 + RAW" now force "slot 1 + RAW". Everything el
 its only references, 14 is a valid value (selector 2, flag 1), the slot mapping above.
 
 Not proven: the label displayed ("LSF + RAW" expected), the EXIF, the shot counter, that the stored quality is restored when leaving the
-profile (stock: not found), that the first slot is the LSF one on the camera (the user's list is LSF, LF, LN, MN in menu order, which matches
+profile (the engine has a restore path when no rule fires, 0x602b2dda..0x602b2e87, seen in static reading only, not confirmed on the camera), that the first slot is the LSF one on the camera (the user's list is LSF, LF, LN, MN in menu order, which matches
 the mapping), and no emulator run of the engine 0x602b2961. Going back: set 0x0f again, or flash the previous firmware: value 14 is a stock value.
