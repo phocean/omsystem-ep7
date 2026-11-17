@@ -17,8 +17,7 @@ exposure-comp choice puts FNo. on the dial, without contacts the FNo. choice put
 
 Stored value: the setting of sid 76 is validated against the 64-byte entries of the list (record 0x604ccd74, alt table 0x604ade7c unchanged), i.e. it is
 the function pair itself, {a, b}. A camera that had {4,2} stored (the previous build's second choice) now has the first choice; {4,3} stays the second
-choice; a stored {3,4} (stock first choice) matches no entry any more: choose the wanted entry again in Custom Menu B after flashing (what the validator does
-with an unmatched stored value was not traced; the dial itself keeps working with {3,4}, the pair is just two valid functions).
+choice; a stored {3,4} (stock first choice) matches no entry any more: choose the wanted entry again in Custom Menu B after flashing (traced in the security review: an unmatched stored value is read as the last entry of the list, so the menu shows the second choice; the dial itself keeps working with {3,4}, the pair is just two valid functions).
 
 Why the last edit: on the camera the dial on "Exp. comp." did nothing in mode M. The rule engine returns 256 ("disabled") for sid 2 in mode M when
 sid 15210 is 0, so the dial rule 69 refuses and the event is ignored. Emulator run of the real engine 0x602af9d1 (stock vs patched, sid 2, mode M):

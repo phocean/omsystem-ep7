@@ -27,9 +27,13 @@ stock firmware, to go back.
 ## 3. Check
 
 Open Custom Menu > Button Function (four rows), Setup > Firmware, Setup > Monitor Adjust, then take a photo in a COLOR profile:
-it must produce a JPEG and no RAW.
+it must produce a JPEG and no RAW. Then, in mode M, Custom Menu B > Dial function M/B: choose a pair and try the free dial
+(no contact lens: ISO or exposure compensation; contact lens: aperture).
 
 ## 4. Go back
+
+First, in Custom Menu B > Dial function M/B, choose **Shutter / FNo.** (the choice stock also has). Otherwise the stored
+"Shutter / Exp comp" pair stays and the free dial does nothing in mode M on stock until you pick a stock choice again.
 
 Copy `out/final/restore/E1429999.BIN` to the card as `DCOLYMP/E1429999.BIN` and flash it the same way. It writes the
 stock firmware back (your camera settings are kept).

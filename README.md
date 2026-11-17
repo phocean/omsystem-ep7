@@ -1,36 +1,33 @@
 # firmware-ep7
 
-A personal, minimal firmware for the **Olympus / OM PEN E-P7, firmware 1.1 only**. It is the stock 1.1 firmware plus a
-small set of byte-level patches, built on your computer from OM's own download. It is derived from
-[Caduceus for the E-P7](https://github.com/cakelesscoder/caduceus-ep7) (Apache-2.0): it keeps only what this
-firmware uses and starts a new history (see [NOTICE](NOTICE)).
+**A small, readable firmware for the Olympus / OM PEN E-P7 (firmware 1.1) that fixes the ergonomics the stock firmware gets wrong.**
+It is the stock 1.1 firmware plus a few dozen byte-level patches, built on your own computer from OM's official download.
+No firmware is distributed here. Derived from [Caduceus for the E-P7](https://github.com/cakelesscoder/caduceus-ep7)
+(Apache-2.0); it keeps only what this firmware uses and starts a clean history (see [NOTICE](NOTICE)).
 
 > [!WARNING]
 > **Unofficial firmware. Flashing can brick your camera or lose data. Use at your own risk.**
-> The patches are used by their author on one E-P7. Nothing is guaranteed on any other body or firmware version.
-> This repository contains no OM firmware (it is never committed): the build downloads the official file and
-> checks its SHA-256 before using it.
+> It has been used daily by its author on one E-P7 (firmware 1.1). Nothing is guaranteed on another body or firmware version.
+> A tested way back to the stock firmware is built every time (see [Going back](#going-back)).
 
-## What it changes
+## What you get
 
-| Feature | Effect | Where |
-|---|---|---|
-| Front Profile Control lever | The last profile is applied directly. The profile list no longer opens when you move the lever; it stays reachable from a button assigned to it | `patches/lever_nomenu` |
-| JPEG only on COLOR / MONO profiles | A COLOR or MONO profile never saves a RAW file, whatever the image-quality menu says. Always on, no option, nothing read from the SD card | `patches/jpeg_always`, [docs/JPEG_ALWAYS.md](docs/JPEG_ALWAYS.md) |
-| LCD colour fix | Corrects the colour tint of the back screen (data table of the panel driver) | `patches/lcd_tint` |
-| More button functions | Longer function lists for the Fn, REC, right and bottom buttons (Custom Menu > Button Function) | `patches/buttons`, `patches/omc_buttons`, `patches/btn_arrows`, [docs/OMC_FEATURES.md](docs/OMC_FEATURES.md) |
-| Profile JPEG quality | In COLOR / MONO profiles the substituted JPEG is the first slot of the quality list (LSF) instead of the second (LF) | `patches/profile_lsf`, [docs/PROFILE_LSF.md](docs/PROFILE_LSF.md) |
-| M/B dial | Custom B > Dial function M/B offers Shutter / Exposure comp and Shutter / FNo. In mode M the free dial of the FNo. choice sets the ISO when no contact lens is connected; the free dial of the Exp comp choice sets FNo. when a contact lens is connected (exposure comp otherwise) | `patches/dial_iso`, `patches/dial_expcomp`, [docs/DIAL_ISO.md](docs/DIAL_ISO.md), [docs/DIAL_EXPCOMP.md](docs/DIAL_EXPCOMP.md) |
-| Version label | Setup > Firmware shows "phocean" / "1.1" (display only) | `patches/fw_version` |
+| | |
+|---|---|
+| **Profile lever, no list** | Moving the front Profile Control lever applies the last profile directly. The list no longer pops up; it stays one button press away. |
+| **JPEG only on COLOR / MONO profiles** | A COLOR or MONO profile never writes a RAW, whatever the quality menu says (it saves LSF, the best JPEG of your list). Normal modes keep RAW as usual. Always on, no option. |
+| **Free dial in mode M, whatever your lens** | Custom Menu B > *Dial function M/B* now offers **Shutter / Exposure comp** and **Shutter / FNo.** With a lens with electronic contacts the free dial sets the aperture, as before. With a manual lens or adapter (where the FNo. dial does nothing) it sets the **ISO** (FNo. choice) or the **exposure compensation** (Exp comp choice). |
+| **More button functions** | Longer function lists for the Fn, REC, right and bottom buttons, so you can put focus peaking, magnify and other functions where you want them. |
+| **LCD colour fix** | Corrects the colour tint of the back screen. |
+| **Version label** | Setup > Firmware shows `phocean 1.1`, so you can tell at a glance what is installed. |
 
-[docs/FINAL_BUILD.md](docs/FINAL_BUILD.md) lists every changed byte range and the expected hashes.
-[docs/FIRMWARE_GUIDE.md](docs/FIRMWARE_GUIDE.md) explains how the firmware is built and the safety rules every patch follows.
+Every change is a small module under `patches/` with its own document, builder and verifier. The full list of changed bytes
+and the expected hashes are in [docs/FINAL_BUILD.md](docs/FINAL_BUILD.md).
 
-## Build
+## Quick start
 
-Requirements: Python 3.12 or later (3.9 is too old for the emulator), a `mn10300-elf` toolchain
-(`tools/setup_toolchain.sh`), the emulator submodule (`git submodule update --init`, see
-`external/oly_fw_analysis/REPRODUCING.md`) and numpy for the LCD check.
+You need Python 3.12+, an `mn10300-elf` toolchain (`tools/setup_toolchain.sh`), the emulator submodule
+(`git submodule update --init`, see `external/oly_fw_analysis/REPRODUCING.md`) and numpy (for the LCD check).
 
 ```bash
 tools/fetch_stock.sh        # downloads OM's firmware 1.1 and checks its SHA-256
@@ -38,18 +35,36 @@ tools/decode_stock.sh       # decodes it into analysis/ (not committed)
 make final PYNP=/path/to/python-with-numpy
 ```
 
-`make final` builds the package, runs every check (module verifiers, emulator tests, mutation tests, byte-for-byte
-comparison with the stock) and refuses to write anything if a hash differs from the pinned one. Output:
+`make final` builds the package and runs every check (module verifiers, emulator tests on the real routines, mutation tests,
+byte-for-byte comparison with the stock). It refuses to write anything if a hash differs from the pinned one. You get:
 
 - `out/final/DCOLYMP/E1429999.BIN`: the update file for the SD card;
 - `out/final/restore/E1429999.BIN`: the stock firmware, to go back.
 
-Nothing in this repository flashes a camera or writes to an SD card. See [docs/INSTALL.md](docs/INSTALL.md).
+Then follow [docs/INSTALL.md](docs/INSTALL.md): copy the file to `DCOLYMP/E1429999.BIN` on the card, hold **OK** while powering on,
+slow LED blink = done. Nothing in this repository flashes a camera or touches an SD card.
 
-Other targets: `make minimal` (JPEG only + lever, nothing else), `make stock`, `make clean`.
+## Going back
+
+`out/final/restore/E1429999.BIN` is the exact stock firmware, flashed the same way. The restore path was tried on a real camera
+before any patch was. Before restoring, pick *Shutter / FNo.* in Dial function M/B (details in [docs/INSTALL.md](docs/INSTALL.md)).
+
+## How it is kept safe
+
+Each patch follows the rules in [docs/FIRMWARE_GUIDE.md](docs/FIRMWARE_GUIDE.md): one feature group per flash, no write into the
+loaded image, nothing that runs at boot, an emulator test of the real routines, and an independent security review of the
+exact bytes before every flash. The one piece of added code (the dial logic, 76 bytes) is reached only by a dial turn, never at start-up.
+
+What is **not** proven is listed in each patch document (for example, that the "contact lens" test behaves identically on every
+adapter). Different lenses, adapters and bodies are exactly where help is welcome.
+
+## Help wanted
+
+If you try it, please open an issue with: camera serial prefix, firmware version shown in Setup > Firmware, the lenses/adapters
+you used, and what you saw. Reports of failed flashes are as useful as successes. Please do not post OM firmware files.
 
 ## Credits and licence
 
-Apache-2.0 (see [LICENSE](LICENSE)). Built on the work of cakelesscoder (Caduceus), and on fishcu's
-`oly_fw_analysis` (emulator, GPL-3.0, used as a submodule only for verification). Details in [NOTICE](NOTICE).
-"Olympus", "OM SYSTEM" and "PEN" are trademarks of their owners; this project is not affiliated with them.
+Apache-2.0 (see [LICENSE](LICENSE)). Built on the work of cakelesscoder (Caduceus) and on fishcu's
+[`oly_fw_analysis`](https://github.com/fishcu/oly_fw_analysis) (MN103 emulator, GPL-3.0, used as a submodule for verification only).
+Details in [NOTICE](NOTICE). "Olympus", "OM SYSTEM" and "PEN" are trademarks of their owners; this project is not affiliated with them.
