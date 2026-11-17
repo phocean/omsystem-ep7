@@ -3,7 +3,7 @@
 (Setup > Firmware, Body row: title "phocean", value "1.0"; display only). Offline.
 
   python3 -I patches/final/build.py --jpeg generated/jpeg_always_stock/edits.json --out generated/final/edits.json
-          [--without lcd_tint|omc_buttons|btn_arrows|fw_version] [--label phocean] [--version 1.0]    # same spec minus one module (the base the module verifiers diff against)
+          [--without lcd_tint|omc_buttons|btn_arrows|fw_version] [--label phocean] [--version 1.1]    # same spec minus one module (the base the module verifiers diff against)
 
 Nothing here depends on Caduceus v0.29a: every module is rebuilt from the STOCK image (analysis/ep7_1100/...decoded.bin,
 EP7_STOCK_MAIN overrides) with its own builder code:
@@ -42,7 +42,7 @@ FW = load('final_fw_version', 'patches/fw_version/build.py')
 import fork_build as FB  # noqa: E402
 
 MODULES = ['jpeg_always', 'lever_nomenu', 'lcd_tint', 'omc_buttons', 'btn_arrows', 'fw_version', 'dial_expcomp', 'profile_lsf', 'dial_iso']
-LABEL, VERSION = 'phocean', '1.0'     # Setup > Firmware, Body row: title and value (display only; the box is narrow, keep both short)
+LABEL, VERSION = 'phocean', '1.1'     # Setup > Firmware, Body row: title and value (display only; the box is narrow, keep both short)
 B = 0x60020020
 
 

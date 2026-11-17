@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""dial_iso (design A2): M-mode free dial assigned to "FNo." becomes ISO when no contact lens is connected. Offline. docs/DIAL_ISO.md.
+"""dial_iso (design A3), mode M: free dial FNo. -> ISO without a contact lens; free dial ExpComp -> FNo. with a contact lens. Offline. docs/DIAL_ISO.md.
 
   python3 -I patches/dial_iso/build.py [--out patches/dial_iso/edits.json] [--stock-main PATH]   ($EP7_STOCK_MAIN overrides the stock path)
 
 Writes edits.json ({components, edits}; 2 edits of kind 0x100, `expect` = the stock bytes read from the decoded stock main):
   hook  0x60cdc837  9 B  `mov d0,a3 ; call 0x60cc8be9,[d2,d3],8`  ->  `jmp dl_fn ; nop x4`   (resume 0x60cdc840)
-  stub  0x60210900  60 B  dl_fn (dial_iso.s.in), tail of section 1 (stock FF 0x602108ec..0x60211000)
-Ranges for tools/fork_build.py STOCK_MODULES (printed, and asserted here): stub (0x60210900, 0x6021093c), hook (0x60cdc837, 0x60cdc840).
+  stub  0x60210900  76 B  dl_fn (dial_iso.s.in), tail of section 1 (stock FF 0x602108ec..0x60211000)
+Ranges for tools/fork_build.py STOCK_MODULES (printed, and asserted here): stub (0x60210900, 0x6021094c), hook (0x60cdc837, 0x60cdc840).
 
 Refusals (nothing is written): the hook bytes / resume instruction / callee prologues and frames are not stock; the zone is not FF or the 20-byte
 guard in front is not; any abs32 word (cached, uncached, flash-logical, flash-uncached alias; any byte offset) or jmp / call / calls / bcc
@@ -24,7 +24,7 @@ STOCK = Path(os.environ.get('EP7_STOCK_MAIN') or ROOT / 'analysis/ep7_1100/00_01
 TC = Path.home() / 'ep7fw-toolchains/mn10300/bin'
 SRC = 'patches/dial_iso'
 
-AT, END = 0x60210900, 0x6021093c                    # stub claim (60 B)
+AT, END = 0x60210900, 0x6021094c                    # stub claim (76 B)
 ZONE = (0x602108ec, 0x60211000)                     # stock FF tail of section 1
 GUARD = 16                                          # FF kept in front of / behind the claim for the reference scan (the 20 B 0x602108ec..0x60210900 are all FF)
 HOOK, HOOK_END, RESUME = 0x60cdc837, 0x60cdc840, 0x60cdc840
@@ -270,9 +270,9 @@ def main():
         raise SystemExit('stock bytes under the stub are not FF')
     spec = dict(components=['0x100'], edits=[
         dict(kind='0x100', addr=hex(HOOK), expect=HOOK_STOCK.hex(), new=jmp.hex(), source=SRC,
-             why='dial_iso: in the dial routine 0x60cdc82c, `mov d0,a3 ; call 0x60cc8be9,[d2,d3],8` -> `jmp 0x60210900 ; nop x4` (resume 0x60cdc840). M mode, dial function FNo. (3) with no contact lens -> ISO (6).'),
+             why='dial_iso: in the dial routine 0x60cdc82c, `mov d0,a3 ; call 0x60cc8be9,[d2,d3],8` -> `jmp 0x60210900 ; nop x4` (resume 0x60cdc840). M mode: dial function FNo. (3) with no contact lens -> ISO (6); dial function ExpComp (2) with a contact lens -> FNo. (3).'),
         dict(kind='0x100', addr=hex(AT), expect=exp_stub.hex(), new=code.hex(), source=SRC,
-             why=f'dial_iso: dl_fn ({len(code)} B, section-1 FF tail 0x60210900..0x6021093c): replays the displaced instructions, a3 = 6 when fn == 3 and mode key == 6 and 0x602ea74c() == 0, then jmp 0x60cdc840.')])
+             why=f'dial_iso: dl_fn ({len(code)} B, section-1 FF tail 0x60210900..0x6021094c): replays the displaced instructions; mode key == 6: a3 = 6 when fn == 3 and 0x602ea74c() == 0, a3 = 3 when fn == 2 and 0x602ea74c() != 0; then jmp 0x60cdc840.')])
     a.out.write_text(json.dumps(spec, indent=1) + '\n')
     print(f'wrote {a.out}')
     print(f'stub  {AT:#x}..{END:#x} ({len(code)} B)  fork_build range: ({AT:#x}, {END:#x})')

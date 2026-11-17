@@ -1,12 +1,16 @@
-/* E-P7 1.1 "dial_iso" (design A2): free dial assigned to FNo. becomes ISO when no contact lens is connected, in mode M.
- * docs/DIAL_ISO.md.
+/* E-P7 1.1 "dial_iso" (design A3), mode M only (docs/DIAL_ISO.md):
+ *   free dial function FNo. (3) and NO contact lens  -> ISO (6)
+ *   free dial function ExpComp (2) and a contact lens -> FNo. (3)
+ *   everything else: stock.
  *
  * Hook: 0x60cdc837 in the dial routine 0x60cdc82c. The 9 bytes `mov d0,a3 ; call 0x60cc8be9,[d2,d3],8` (d0 = the dial function
  * code just returned by 0x60cc8b23: 2 = ExpComp, 3 = FNo, 4 = Shutter, 6 = ISO, 9 = ...) are replaced by `jmp dl_fn ; nop x4`.
  * dl_fn replays them (with d0 possibly changed) and `jmp`s back to 0x60cdc840 (the instruction after the displaced call).
  *
- * Rule: fn == 3 AND mode key == 6 (M; key = sid 109, or sid 24 when sid 109 reads 0) AND 0x602ea74c() == 0 (no contact lens)
- *       -> a3 = 6 (ISO). Anything else: a3 = fn, d0 = fn unchanged (stock path).
+ * Rule: fn in {2,3} AND mode key == 6 (M; key = sid 109, or sid 24 when sid 109 reads 0):
+ *         0x602ea74c() == 0 (no contact lens): fn 3 -> a3 = 6 (ISO), fn 2 stays 2 (exposure comp)
+ *         0x602ea74c() != 0 (contact lens)   : fn 2 -> a3 = 3 (FNo.), fn 3 stays 3
+ *       Anything else: a3 = fn, d0 = fn unchanged (stock path).
  * a3 is the register the stock routine keeps the function code in for the rest of the routine; d0 is the argument of the rule
  * 0x60cc8be9 (function code -> rule id lookup). The stub passes the SAME a3 to both, so rule and ISO-direct branch agree.
  *
@@ -25,7 +29,10 @@ _start:
 dl_fn:
  mov d0,a3                        /* displaced: function code */
  cmp 3,d0
- bne dl_out                       /* not FNo.: stock, d0 = fn */
+ beq dl_mode
+ cmp 2,d0
+ bne dl_out                       /* not FNo. / ExpComp: stock, d0 = fn */
+dl_mode:
  mov 109,d0                       /* mode key: sid 109 ... */
  call ep7_getsid,[d2,a2],24
  cmp 0,d0
@@ -37,9 +44,16 @@ dl_m:
  bne dl_keep
  call ep7_lens,[d2],28
  exthu d0
- cmp 0,d0                         /* != 0: contact lens connected -> stock */
+ cmp 0,d0
+ bne dl_lens                      /* != 0: contact lens connected */
+ cmp 3,a3                         /* no contact lens: FNo. -> ISO */
  bne dl_keep
- mov 6,a3                         /* ISO */
+ mov 6,a3
+ bra dl_keep
+dl_lens:
+ cmp 2,a3                         /* contact lens: ExpComp -> FNo. */
+ bne dl_keep
+ mov 3,a3
 dl_keep:
  mov a3,d0
 dl_out:

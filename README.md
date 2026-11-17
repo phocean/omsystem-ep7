@@ -20,8 +20,8 @@ firmware uses and starts a new history (see [NOTICE](NOTICE)).
 | LCD colour fix | Corrects the colour tint of the back screen (data table of the panel driver) | `patches/lcd_tint` |
 | More button functions | Longer function lists for the Fn, REC, right and bottom buttons (Custom Menu > Button Function) | `patches/buttons`, `patches/omc_buttons`, `patches/btn_arrows`, [docs/OMC_FEATURES.md](docs/OMC_FEATURES.md) |
 | Profile JPEG quality | In COLOR / MONO profiles the substituted JPEG is the first slot of the quality list (LSF) instead of the second (LF) | `patches/profile_lsf`, [docs/PROFILE_LSF.md](docs/PROFILE_LSF.md) |
-| M/B dial | In mode M with a lens without contacts, the free dial (FNo.) sets the ISO; Custom B > Dial function M/B also offers Shutter / Exposure comp, now accepted in mode M | `patches/dial_iso`, `patches/dial_expcomp`, [docs/DIAL_ISO.md](docs/DIAL_ISO.md), [docs/DIAL_EXPCOMP.md](docs/DIAL_EXPCOMP.md) |
-| Version label | Setup > Firmware shows "phocean" / "1.0" (display only) | `patches/fw_version` |
+| M/B dial | Custom B > Dial function M/B offers Shutter / Exposure comp and Shutter / FNo. In mode M the free dial of the FNo. choice sets the ISO when no contact lens is connected; the free dial of the Exp comp choice sets FNo. when a contact lens is connected (exposure comp otherwise) | `patches/dial_iso`, `patches/dial_expcomp`, [docs/DIAL_ISO.md](docs/DIAL_ISO.md), [docs/DIAL_EXPCOMP.md](docs/DIAL_EXPCOMP.md) |
+| Version label | Setup > Firmware shows "phocean" / "1.1" (display only) | `patches/fw_version` |
 
 [docs/FINAL_BUILD.md](docs/FINAL_BUILD.md) lists every changed byte range and the expected hashes.
 [docs/FIRMWARE_GUIDE.md](docs/FIRMWARE_GUIDE.md) explains how the firmware is built and the safety rules every patch follows.

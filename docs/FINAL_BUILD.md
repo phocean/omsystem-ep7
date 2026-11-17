@@ -25,11 +25,11 @@ only inside a declared `0x101` range; none is declared. Registered in `docs/CODE
 | lcd_tint | `patches/lcd_tint/build.py` `edits(8, 16)` | 4 | 5853 | 513 | table 0x602355de-0x60236cb8 (225 rows x 26 B), G bytes 0x602353ee, 0x602354b2, 0x60236d2a |
 | omc_buttons | `patches/buttons/build.py` `edits()` | 7 | 64 | 40 | list 0x604cae3c-0x604cae6a (23 codes); records 0x604cda14 (2), 0x604cda20 (4), 0x604cda28 (2), 0x604cda34 (4), 0x604cda3c (2), 0x604cdae8 (4) |
 | btn_arrows | `patches/btn_arrows/build.py` `apply(version=None)` | 10 | 71 | 44 | list 0x604cb00e-0x604cb02e (14 codes); records 0x604cdadc (2), 0x604cdaf0 (2); rows 0x61242fe8-0x61242ff0; text "Right Fn" 0x61242ff0-0x61242ff9; mode-42 record 0x6115056c-0x61150572; item records 0x611bf7c8 (2), 0x611bf7cc (4), 0x611ccf34 (2), 0x611ccf38 (4) |
-| fw_version | `patches/fw_version/build.py` `apply(spec, "1.0", "phocean")` | 5 | 64 | 54 | setter calls 0x60d7f271, 0x60d7f2cd (7 B each); `fw_val` 0x601e1c40 (34 B, dead EVF table); row descriptor 0x6115d5e8 (8 B); text "phocean" 0x61242fc0 (8 B). Display only: Setup > Firmware, Body row shows title "phocean" and value "1.0" instead of "Body" / "1.1" |
-| dial_expcomp | `patches/dial_expcomp/edits.json` | 3 | 4 | 3 | list byte 0x604bb480 (03 -> 02), label id 0x611d6d56 (93 02 -> 92 02), rule-engine byte 0x6044afda (00 -> 02). Custom B > Dial function M/B: second choice {Shutter, FNo.} becomes {Shutter, Exposure comp}, and the engine no longer disables exposure comp in mode M. See [DIAL_EXPCOMP.md](DIAL_EXPCOMP.md) |
-| dial_iso | `patches/dial_iso/edits.json` | 2 | 69 | 69 | stub 0x60210900-0x6021093c (60 B, FF tail of section 1) and 9-byte hook 0x60cdc837 in the dial routine 0x60cdc82c: in mode M, free dial on FNo., lens without contacts -> function ISO (stock ISO-direct branch). See [DIAL_ISO.md](DIAL_ISO.md) |
+| fw_version | `patches/fw_version/build.py` `apply(spec, "1.1", "phocean")` | 5 | 64 | 54 | setter calls 0x60d7f271, 0x60d7f2cd (7 B each); `fw_val` 0x601e1c40 (34 B, dead EVF table); row descriptor 0x6115d5e8 (8 B); text "phocean" 0x61242fc0 (8 B). Display only: Setup > Firmware, Body row shows title "phocean" and value "1.1" instead of "Body" / "1.1" |
+| dial_expcomp | `patches/dial_expcomp/edits.json` | 4 | 13 | 5 | list entry 0x604bb43c (8 B: `03000000 04000000` -> `04000000 02000000`), label ids 0x611d6d32 (93 02 -> 94 02) and 0x611d6d4a (94 02 -> 92 02), rule-engine byte 0x6044afda (00 -> 02). Custom B > Dial function M/B: the choices become {Shutter, Exposure comp} and {Shutter, FNo.} (stock second choice), and the engine no longer disables exposure comp in mode M. See [DIAL_EXPCOMP.md](DIAL_EXPCOMP.md) |
+| dial_iso | `patches/dial_iso/edits.json` | 2 | 85 | 85 | stub 0x60210900-0x6021094c (76 B, FF tail of section 1) and 9-byte hook 0x60cdc837 in the dial routine 0x60cdc82c: in mode M, free dial on FNo. + lens without contacts -> function ISO (stock ISO-direct branch); free dial on Exp comp + contact lens -> FNo. See [DIAL_ISO.md](DIAL_ISO.md) |
 | profile_lsf | `patches/profile_lsf/edits.json` | 1 | 1 | 1 | result byte 0x6043c24e (0f -> 0e) of the quality dependency rules: in a profile, "RAW only" is rewritten to JPEG slot 1 + RAW (the first quality slot, LSF here) instead of slot 2 (LF). See [PROFILE_LSF.md](PROFILE_LSF.md) |
-| **Total** | | **36** | **6246** | **843** (0x100) + **0** (0x101) | |
+| **Total** | | **37** | **6271** | **861** (0x100) + **0** (0x101) | |
 
 (Written bytes count every byte of an edit; "differ" counts only the bytes whose value changes.)
 
@@ -47,7 +47,7 @@ section 6 FF tail (0x61242fe8-0x61242ff9, section 6 load end 0x61243000, all FF 
 | Candidate | Finding | Treatment |
 |---|---|---|
 | `0x101` strings / icons for the new button labels | None needed [V]. The 23 + 14 codes are labelled by stock entries (string ids and icon ids that the stock lists already use); v0.29a has no `0x101` edit for buttons (its 15 `0x101` edits are aspect icons and SCP cells). | `0x101` stays the stock payload. A label whose stock string were missing would show an empty cell, not crash [I]. |
-| Version label (`patches/fw_version`) | `omc_buttons.apply()` and `btn_arrows.apply()` call it and require a v0.28 base. It is Caduceus-only (code at 0x601e1c40, text at 0x61242fc0). | Not used for the Caduceus label. The final calls the same helpers on the stock image (`BT.edits`, `BA.apply(version=None)`) and adds its own label with `patches/fw_version` (title "phocean", value "1.0"; change with `patches/final/build.py --label/--version`, then update the pinned hashes). The `L` check of `omc_buttons/verify.py` (label "0.28o1") does not apply and is replaced by `patches/fw_version/verify.py`. |
+| Version label (`patches/fw_version`) | `omc_buttons.apply()` and `btn_arrows.apply()` call it and require a v0.28 base. It is Caduceus-only (code at 0x601e1c40, text at 0x61242fc0). | Not used for the Caduceus label. The final calls the same helpers on the stock image (`BT.edits`, `BA.apply(version=None)`) and adds its own label with `patches/fw_version` (title "phocean", value "1.1"; change with `patches/final/build.py --label/--version`, then update the pinned hashes). The `L` check of `omc_buttons/verify.py` (label "0.28o1") does not apply and is replaced by `patches/fw_version/verify.py`. |
 | `btn_arrows` needs the `omc_buttons` arrow edits | `BA.apply()` replaces two omc edits in place and needs `spec['buttons']['dpad_at']`. | `patches/final/build.py` builds the omc edits first from the stock, then runs `BA.apply()`; the result is **byte-identical to v0.29a** (same address, same `expect`, same `new`) for all 4 + 7 + 10 edits [S]. |
 | Section 6 FF tail shared with other patches | In v0.29a the tail 0x61242d00-0x61243000 also holds the film-menu hooks, the 270 list and the "Caduceus" text; btn_arrows takes 0x61242fe8-0x61242ff9. | Alone in the final; stock FF, no stock word points into it, guard 0x61242ff9-0x61243000 stays FF [S]. |
 | Film-menu label-builder hooks (`0x60df255f`, `0x60df25dc`) | In v0.29a they sit on the kind-4 label path (jmp to hooks at 0x61242d10/e10, replay of stock for any non-film row). "Right Fn" is a **kind 5** label, so it is not routed through them. The 23 + 14 button labels are kind 3/4 and fall through the hooks to the stock path. | The final has the stock builders. Window check W lists them as the only (expected) differences with v0.29a next to the setting 270 record. |
@@ -90,9 +90,9 @@ Stock `OLY_E_142_1100_0000_0000.BIN`: `9d1610124ad98f6edae4540182205f06c9c703d90
 
 | File | SHA-256 |
 |---|---|
-| `out/final/DCOLYMP/E1429999.BIN` (52,428,800 B) | `e30815a7d97f8356083835490e2d8ac831366e250fcd1f97807b7e0810242792` |
+| `out/final/DCOLYMP/E1429999.BIN` (52,428,800 B) | `b1c3f7c8aeec50d408db6416131d51064b029a9582b6fa96a5a29693258eb516` |
 | `out/final/restore/E1429999.BIN` (the stock slice of 0x100 + 0x101; same file as `out/minimal/restore`) | `963f4dfe560e29216862c96284c92225f49977fd831a2ed60fa3ebbddf6d2327` |
-| decoded 0x100 payload of the final | `4e530578bcd955237cc45d2fce6fef5095869c61812d9c1c67b9fc8f82bc042f` |
+| decoded 0x100 payload of the final | `4d8474cd5b79c7a6c11f53217077d970d5718f41007b00bd8ffde1542daaf005` |
 | decoded 0x100 payload of the stock | `5dd9af164b4590c7e82f6905c919b3cc450bb58f2d5742ab2a0e3a4eb2e26190` |
 | decoded 0x101 payload (final == stock) | `8606cb90e06b67aee31a1b4319b585905b66e4e3ee29c903bd328aa33b362868` |
 
@@ -103,21 +103,30 @@ Check the file on the card against the first hash before flashing.
 
 - **Not camera-tested in this combination** (stock + jpeg_always + lever + lcd_tint + buttons). The README tags the two features "New in v0.20" and "New in v0.29", not "Camera-tested": the arrow rows were camera-run at b4 (`docs/BUTTONS.md` 4d), and b5 / v0.29 is a beta. The LCD patch was released in v0.20; CHANGELOG records no camera defect.
 - **What changes when the rest of Caduceus is removed.** Sections: no section gets new code (the jpeg stub is in section 1, loaded before the section 2 sites; the other modules are data). Tables: none is relocated; the 23-code and 14-code lists are in place, the old lists beyond them are unreferenced stock bytes.
-  Label hooks and the Caduceus version label are gone (the fork's own label "phocean 1.0" replaces it). `0x101` goes back to stock. No SD loader, so EP7MOD is ignored (not touched). The film menu / looks / editor are gone. Behaviour of the Button Function screen without the Caduceus hooks on the same screen is [I] (see section 2).
+  Label hooks and the Caduceus version label are gone (the fork's own label "phocean 1.1" replaces it). `0x101` goes back to stock. No SD loader, so EP7MOD is ignored (not touched). The film menu / looks / editor are gone. Behaviour of the Button Function screen without the Caduceus hooks on the same screen is [I] (see section 2).
 - **Emulator evidence is for the data paths** (validator, stepping, dispatcher function table, LCD SPI buffer). The row list, the "Right Fn" text and the kind-5 item path (UI drawing) are checked as bytes and as table reads, not as a drawn screen.
 - **RAW is still possible on paths jpeg_always does not cover** (R1-R3 of `docs/JPEG_ALWAYS.md`). Assigning a button to RAW (code 22) is a deliberate RAW action; it is one of the functions this build offers.
 - **Flash path.** The camera currently flashed has Caduceus v0.29a (+ lever + jpeg_only) and a modified `0x101`. This package writes `0x100` and `0x101` in full (`0x101` = stock). Whether the updater accepts a stock-based package from a Caduceus-flashed camera was not tried by us (`docs/JPEG_ALWAYS.md` section 7). One change per flash, restore file ready (`docs/INSTALL.md`).
 - Old settings: Caduceus BUNDLES.BIN / LOOKS.BIN on the card are not read by this firmware. Settings stored by the camera that only Caduceus could set are not checked (section 2).
 - Not run here: `patches/jpeg_always/emu_verify.py --base stock` on the stock-only image (unchanged, `make jpeg_always_stock_emu`).
 
-## Two-step install (security review of the code module)
+## Install steps for this build (delta from the build flashed before)
 
-`dial_iso` is the only code module of the final (a 60-byte stub in the FF tail of section 1 and a 9-byte hook in the dial routine). The review
-recommends flashing the data modules first, then the code alone, so that a fault can be attributed:
+Earlier build (the one flashed on 2026-11-16/17 in two steps): SHA-256 `e30815a7d97f8356083835490e2d8ac831366e250fcd1f97807b7e0810242792`, decoded 0x100 `4e530578...042f`.
+This build: `b1c3f7c8aeec50d408db6416131d51064b029a9582b6fa96a5a29693258eb516`, decoded 0x100 `4d8474cd...f005`. 0x101 and the restore file (`963f4dfe...2327`) are unchanged.
+The decoded 0x100 of the earlier build was rebuilt from the earlier modules and matches `4e530578...` exactly; the two payloads differ by **78 bytes in 9 places**:
 
-1. `make final` then `make final_nocode` -> `out/final_nocode/DCOLYMP/E1429999.BIN`, SHA-256 `dc323e32dc65d67e39b11b10a01d111bd16837a25ea95ce29dd5f614e68b8f6c`
-   (the final without `dial_iso`: 774 bytes differ from stock, 0x101 stock).
-2. `out/final/DCOLYMP/E1429999.BIN` (SHA-256 above) adds exactly the 69 bytes of `dial_iso`.
+| Address | Earlier build | This build | Meaning |
+|---|---|---|---|
+| 0x601e1c5e | 30 | 31 | version value "1.0" -> "1.1" (fw_version) |
+| 0x60210904-0x6021094b | 60-byte stub + FF | 76-byte stub (`dl_fn`) | dial_iso: adds ExpComp -> FNo. with a contact lens (stub 0x60210900-0x6021094c; the first 4 bytes `f1e3a003` are identical) |
+| 0x604bb43c, 0x604bb440 | 03, 04 | 04, 02 | M/B list, first entry {3,4} -> {4,2} |
+| 0x604bb480 | 02 | 03 | M/B list, second entry back to the stock {4,3} |
+| 0x611d6d32 | 93 | 94 | first dial label, first choice: FNo. -> Shutter |
+| 0x611d6d4a | 94 | 92 | second dial label, first choice: Shutter -> exposure comp icon |
+| 0x611d6d56 | 92 | 93 | second dial label, second choice: back to FNo. |
 
-The restore file is the same for both (`963f4dfe...2327`).
-
+The hook (0x60cdc837) is identical in both builds, so the only code that changes is the stub body. The earlier stub's behaviour (FNo. -> ISO without contacts,
+stock with a contact lens) was run on the camera; this stub contains it unchanged and adds the second rule. A single flash of `out/final/DCOLYMP/E1429999.BIN`
+over the earlier build is therefore the recommended path; `make final_nocode` (SHA-256 `26acd1421b6b6ac54e2729f98ac8a18a639d965bb522853f4d80c9a1855b7745`: this build without
+`dial_iso`, the old hook and stub vanish too) remains available if a two-step install is wanted (first it, then `out/final`).

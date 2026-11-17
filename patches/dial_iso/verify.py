@@ -4,22 +4,26 @@
   EP7_MAIN_REPO=<checkout holding external/oly_fw_analysis> PYTHONPATH=<it>/external/oly_fw_analysis/tools \\
   python3 -I patches/dial_iso/verify.py [edits.json] [--decoded PATCHED_DECODED_MAIN]     exit 0 = everything PASS, every mutant DETECTED
 
-P  package: stock + edits == the patched image; only the bytes of the two edits differ (stub 0x60210900..0x6021093c, hook 0x60cdc837..0x60cdc840);
+P  package: stock + edits == the patched image; only the bytes of the two edits differ (stub 0x60210900..0x6021094c, hook 0x60cdc837..0x60cdc840);
    `expect` bytes are stock; edits.json is exactly what build.py produces now; with --decoded, that decoded main (e.g. out/*/ payload) equals
    stock + edits.json.
 E  the REAL dial routine 0x60cdc82c (entered by the call its callers use: `call 0x60cdc82c,[d2,d3,a2,a3],56`, d0 = event, d1 = counter,
    a1 = ctx), the REAL rule 0x60cc8be9, the REAL ISO-direct helpers 0x60cdda80 / 0x60cddaec / 0x60cde346; every other callee is a stub placed
    at its own address with the frame read from its call site (settings getter 0x60ccf9f3 returns per-sid values, 0x602ea74c the lens flag).
    Image regions are read-only (a store into the image faults). Runs, each stock vs patched, same inputs:
-   E1  256 cases = 2 events x counter +-1 x mode key {3,4,5,6} x lens {0,1} x d2 {9,12,13,19} x 0x60ceca1d {0,1}, function 3:
-       not (key 6 and lens 0): all of calls, return, (32,a2), (192,a2), (272/276,a2), sp, registers, stack above sp identical to stock;
-       target: a3 = 6, rule called with 6, ISO-direct branch (d2 in 9/12/13): 0x60cde346(6, counter), (32,a2) = 215 / 216, (192,a2) = 0x5704.
-   E2  oracle runs: patched(fn, inputs) == stock(fn' , inputs), fn' = 6 if (fn == 3 and key == 6 and lens == 0) else fn, key = sid 109 else sid 24;
+   E1  512 cases = functions {2,3} x 2 events x counter +-1 x mode key {3,4,5,6} x lens {0,1} x d2 {9,12,13,19} x 0x60ceca1d {0,1}:
+       function 3, key 6, lens 0 (target ISO): a3 = 6, rule called with 6, ISO-direct branch (d2 in 9/12/13): 0x60cde346(6, counter),
+       (32,a2) = 215 / 216, (192,a2) = 0x5704;
+       function 2, key 6, lens 1 (target FNo.): everything identical to the stock run with function 3;
+       every other case: all of calls, return, (32,a2), (192,a2), (272/276,a2), sp, registers, stack above sp identical to the stock run with the same function.
+   E2  oracle runs: patched(fn, inputs) == stock(fn' , inputs), fn' = 6 if (fn == 3 and key == 6 and lens == 0), 3 if (fn == 2 and key == 6 and lens != 0), else fn; key = sid 109 else sid 24;
        compared at the resume point 0x60cdc840 and at the end; 600 random combinations of every input (fn 2..9, sids, lens, guards of the ISO-direct
        branch: rule 75, 0x60cd20e9, card write, (188,a2) = 0x5101, d2 states, event, counter, 0x60ceca1d).
    E3  MDR: differs at the resume point (the stub's calls leave their own return address), identical at the end; the first MDR access after the
        resume point is a `call` (written, never read).
-M  mutants of the stub / hook; the E1 + E2 quick suite must FAIL for each.
+M  mutants of the stub / hook; the E1 + E2 quick suite must FAIL for each. Two mutations are deliberately NOT listed because they are
+   equivalent: dropping the lens-branch `cmp 2,a3` test (the entry gate already lets only functions 2 and 3 through, and 3 -> 3), and dropping the
+   entry gate `cmp 2,d0 ; bne` (functions other than 2 / 3 then fail both later tests and keep a3; the only difference is two extra reads of settings).
 """
 import importlib.util, itertools, json, os, random, re, struct, subprocess, sys, tempfile
 from pathlib import Path
@@ -76,7 +80,7 @@ def package(spec_path, decoded):
     rep('P hook = `jmp 0x60210900` + 4 nop, resume 0x60cdc840 is a whole stock instruction',
         img[HOOK - BASE] == 0xdc and HOOK + struct.unpack_from('<i', img, HOOK + 1 - BASE)[0] == AT and img[HOOK + 5 - BASE:HOOK_END - BASE] == b'\xcb' * 4)
     ranges = {(int(e['addr'], 16), int(e['addr'], 16) + len(e['new']) // 2) for e in spec['edits']}
-    rep('P ranges for tools/fork_build.py STOCK_MODULES', ranges == {(0x60210900, 0x6021093c), (0x60cdc837, 0x60cdc840)}, str([(hex(a), hex(b)) for a, b in sorted(ranges)]))
+    rep('P ranges for tools/fork_build.py STOCK_MODULES', ranges == {(0x60210900, 0x6021094c), (0x60cdc837, 0x60cdc840)}, str([(hex(a), hex(b)) for a, b in sorted(ranges)]))
     if decoded:
         d = Path(decoded).read_bytes()
         rep('P --decoded main == stock + edits.json byte for byte', d == img, f'{len(d)} B')
@@ -220,21 +224,30 @@ EV = [0x1010001, 0x1010002]
 LAST = ('0x60ccf908', '0x60ccf94a')
 
 
+def expected_fn(fn, key, lens):
+    if key == 6 and fn == 3 and lens == 0:
+        return 6
+    if key == 6 and fn == 2 and lens != 0:
+        return 3
+    return fn
+
+
 def e1(pat, quick=False):
     """-> (n cases, n target, [failures])"""
     stock, fails, n, nt = STOCK, [], 0, 0
-    for ev, cnt, key, lens, d2v, ceca in itertools.product(EV, [1, -1], [3, 4, 5, 6], [0, 1], [9, 12, 13, 19], [0, 1]):
+    for fn, ev, cnt, key, lens, d2v, ceca in itertools.product([2, 3], EV, [1, -1], [3, 4, 5, 6], [0, 1], [9, 12, 13, 19], [0, 1]):
         if quick and (ceca or d2v == 13):
             continue
-        a = (3, ev, cnt, 0, key, key, lens, d2v, ceca)
-        s, p = run(stock, *a), run(pat, *a)
+        a = (fn, ev, cnt, 0, key, key, lens, d2v, ceca)
+        ef = expected_fn(fn, key, lens)
+        s, p = run(stock, *((ef,) + a[1:])) if ef != 6 else None, run(pat, *a)
         n += 1
         for nm, r in (('stock', s), ('patched', p)):
-            if not good_run(r):
+            if r is not None and not good_run(r):
                 fails.append(('RUN', nm, a, str(r.get('err') or (r.get('fault'), r.get('status')))[:80]))
-        if not (good_run(s) and good_run(p)):
+        if not good_run(p) or (s is not None and not good_run(s)):
             continue
-        if key == 6 and lens == 0:
+        if ef == 6:
             nt += 1
             lastc = [c for c in p['calls'] if c[0] in LAST]
             rule = [c for c in p['calls'] if c[0] == '0x60cc8be9']
@@ -248,7 +261,7 @@ def e1(pat, quick=False):
         else:
             d = same(s, p)
             if d:
-                fails.append(('STOCK-EQ', a, d))
+                fails.append(('STOCK-EQ', a, ef, d))
     return n, nt, fails
 
 
@@ -267,7 +280,7 @@ def e2(pat, n, seed=7):
     rnd, fails, tgt = random.Random(seed), [], 0
     for _ in range(n):
         k = oracle_args(rnd)
-        fn2 = 6 if (k['fn'] == 3 and key_of(k['s109'], k['s24']) == 6 and k['lens'] == 0) else k['fn']
+        fn2 = expected_fn(k['fn'], key_of(k['s109'], k['s24']), k['lens'])
         tgt += fn2 != k['fn']
         p = {kk: vv for kk, vv in k.items()}
         q = dict(p, fn=fn2)
@@ -294,7 +307,8 @@ def e3(pat):
     """MDR: at the resume point (non-target and target) and at the end (non-target; target against stock with fn = 6)."""
     out = {}
     for nm, k, kref in (('non-target (fn 3, key 6, lens 1)', (3, EV[0], 1, 0, 6, 6, 1, 12, 1), None),
-                        ('target (fn 3, key 6, lens 0) vs stock fn 6', (3, EV[0], 1, 0, 6, 6, 0, 12, 1), (6, EV[0], 1, 0, 6, 6, 0, 12, 1))):
+                        ('target (fn 3, key 6, lens 0) vs stock fn 6', (3, EV[0], 1, 0, 6, 6, 0, 12, 1), (6, EV[0], 1, 0, 6, 6, 0, 12, 1)),
+                        ('target (fn 2, key 6, lens 1) vs stock fn 3', (2, EV[0], 1, 0, 6, 6, 1, 12, 1), (3, EV[0], 1, 0, 6, 6, 1, 12, 1))):
         r0s, r0p = run(STOCK, *(kref or k), stop=RESUME), run(pat, *k, stop=RESUME)
         r1s, r1p = run(STOCK, *(kref or k)), run(pat, *k)
         out[nm] = (r0s['reg']['mdr'], r0p['reg']['mdr'], r1s['reg']['mdr'], r1p['reg']['mdr'], r0s['reg']['sp'] == r0p['reg']['sp'] and r1s['reg']['sp'] == r1p['reg']['sp'])
@@ -320,18 +334,21 @@ def mutants(spec_img):
         return bytes(d)
     nop5 = b'\xcb' * 5
     out = {
-        'lens polarity inverted (bne -> beq)': with_stub(mut_stub(code, 'a000c9049f06', 'a000c8049f06')),
-        'mode key 6 -> 5': with_stub(mut_stub(code, 'a006c910', 'a005c910')),
-        'function 3 -> 4': with_stub(mut_stub(code, 'a003c92c', 'a004c92c')),
-        'ISO 6 -> 9': with_stub(mut_stub(code, '9f06f1dc', '9f09f1dc')),
+        'lens polarity inverted (bne -> beq)': with_stub(mut_stub(code, 'a000c90abf03', 'a000c80abf03')),
+        'mode key 6 -> 5': with_stub(mut_stub(code, 'a006c91c', 'a005c91c')),
+        'first function 3 -> 4': with_stub(mut_stub(code, 'f1e3a003c806', 'f1e3a004c806')),
+        'ISO 6 -> 9': with_stub(mut_stub(code, 'c90c9f06ca08', 'c90c9f09ca08')),
+        'FNo. target 3 -> 4 (contact lens branch)': with_stub(mut_stub(code, 'bf02c9049f03', 'bf02c9049f04')),
+        'exposure-comp test 2 -> 4': with_stub(mut_stub(code, 'bf02c904', 'bf04c904')),
+        'no-lens function test dropped (everything ISO)': with_stub(mut_stub(code, 'bf03c90c', 'cbcbcbcb')),
+        'FNo. assignment with contacts dropped': with_stub(mut_stub(code, '9f03f1dc', 'cbcbf1dc')),
         'hook shifted by 2 bytes': with_stub(code, b'\xdc' + struct.pack('<i', AT + 2 - HOOK) + b'\xcb' * 4),
         'stub without the resume jmp': with_stub(code.replace(code[-5:], nop5)),
         'sid 109 -> 108': with_stub(mut_stub(code, '806d', '806c')),
         'sid 24 fallback dropped': with_stub(mut_stub(code, 'a000c90b8018', 'a000ca0b8018')),
-        'lens test dropped (always ISO)': with_stub(mut_stub(code, 'a000c9049f06', 'a000cbcb9f06')),
-        'fn test dropped': with_stub(mut_stub(code, 'a003c92c', 'a003cbcb')),
-        'restore of d0 dropped': with_stub(mut_stub(code, 'f1dcddb9', 'cbcbddb9')),
-        'ISO set into d0 only (a3 stays 3)': with_stub(mut_stub(code, '9f06f1dc', '8006cbcb')),
+        'lens test dropped (always no lens)': with_stub(mut_stub(code, 'a000c90abf03', 'a000cbcbbf03')),
+        'restore of d0 dropped': with_stub(mut_stub(code, 'f1dcdda9', 'cbcbdda9')),
+        'ISO set into d0 only (a3 stays 3)': with_stub(mut_stub(code, 'c90c9f06ca08', 'c90c8006ca08')),
         'sid 24 only (109 ignored)': with_stub(mut_stub(code, '806d', '8018')),
     }
     return out
@@ -354,7 +371,7 @@ def main():
     spec_path = Path(args[0]) if args else HERE / 'edits.json'
     img = package(spec_path, dec)
     n, nt, f = e1(img)
-    rep(f'E1 real routine 0x60cdc82c: {n} cases ({nt} target, {n - nt} identical to stock)', not f, str(f[:3]) if f else '')
+    rep(f'E1 real routine 0x60cdc82c: {n} cases ({nt} ISO targets, the others identical to the stock run of the expected function)', not f, str(f[:3]) if f else '')
     ex = run(img, 3, EV[0], 1, 0, 6, 6, 0, 12, 1)
     exs = run(STOCK, 3, EV[0], 1, 0, 6, 6, 0, 12, 1)
     print('  example M / no lens / main dial / +1   stock  :', exs['calls'], 'c32', exs['c32'], 'a3', hex(exs['reg']['a3']))
@@ -364,7 +381,7 @@ def main():
     exg = run(img, 3, EV[0], 1, 0, 6, 6, 0, 19, 0)
     print('  example gate fails (d2 = 19)           patched:', exg['calls'], 'c32', exg['c32'])
     f2, tgt = e2(img, 600)
-    rep(f'E2 oracle patched(fn) == stock(fn\'): 600 random combinations ({tgt} remap fn 3 -> 6)', not f2, str(f2[:2]) if f2 else '')
+    rep(f'E2 oracle patched(fn) == stock(fn\'): 600 random combinations ({tgt} remapped: fn 3 -> 6 or fn 2 -> 3)', not f2, str(f2[:2]) if f2 else '')
     mdr, first = e3(img)
     good = bool(first) and first[0][1] == 'call' and all(a != b and c == d and sp for a, b, c, d, sp in mdr.values())
     rep('E3 MDR: differs at the resume point, identical at the end (sp identical); first MDR user after the resume point is a call', good,
