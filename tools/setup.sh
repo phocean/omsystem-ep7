@@ -40,12 +40,12 @@ echo "python: $PY312 ($("$PY312" -V 2>&1))   toolchain prefix: $EP7_TOOLCHAIN"
 
 # ---- 2. Python environment --------------------------------------------------------------------------------------------
 step "Python environment (.venv)"
-if [ -x .venv/bin/python ] && .venv/bin/python -c 'import numpy' 2>/dev/null; then
+if [ -x .venv/bin/python ] && .venv/bin/python -c 'import numpy, PIL' 2>/dev/null; then
   echo ".venv: already set up"
 else
   [ -x .venv/bin/python ] || "$PY312" -m venv .venv
   .venv/bin/python -m pip install --quiet --disable-pip-version-check -r requirements.txt
-  .venv/bin/python -c 'import numpy; print("numpy", numpy.__version__)'
+  .venv/bin/python -c 'import numpy, PIL; print("numpy", numpy.__version__, "Pillow", PIL.__version__)'
 fi
 export PYTHON=$PWD/.venv/bin/python
 

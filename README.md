@@ -31,7 +31,7 @@ Two commands. You need a Mac or Linux machine with `git`, `curl`, `make`, a C co
 
 ```bash
 git clone --recurse-submodules https://github.com/phocean/omsystem-ep7.git && cd omsystem-ep7
-make setup       # once: Python environment with numpy, GNU toolchain and emulator (built from source), OM's firmware 1.1
+make setup       # once: Python environment (numpy, Pillow), GNU toolchain and emulator (built from source), OM's firmware 1.1
 make firmware    # builds the update file, runs every check, prints the two files and their hashes
 ```
 

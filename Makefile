@@ -1,5 +1,5 @@
 # Firmware builds of this fork (stock E-P7 1.1 + our patches). Nothing here flashes a camera or writes to an SD card.
-#   make setup               ONE TIME: venv + numpy, submodule, mn10300 binutils, emulator, OM's stock firmware (tools/setup.sh)
+#   make setup               ONE TIME: venv + numpy/Pillow, submodule, mn10300 binutils, emulator, OM's stock firmware (tools/setup.sh)
 #   make firmware            builds, verifies and prints the update file and the restore file (= make final with the venv)
 #   make stock               check (or download and verify) the official stock firmware
 #   make minimal             stock + jpeg_always + lever_nomenu            -> out/minimal/
