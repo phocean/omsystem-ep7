@@ -31,9 +31,14 @@ Two commands. You need a Mac or Linux machine with `git`, `curl`, `make`, a C co
 
 ```bash
 git clone --recurse-submodules https://github.com/phocean/omsystem-ep7.git && cd omsystem-ep7
-make setup       # once: Python environment (numpy, Pillow), GNU toolchain and emulator (built from source), OM's firmware 1.1
-make firmware    # builds the update file, runs every check, prints the two files and their hashes
+make setup
+make firmware
 ```
+
+1. **Clone** the repository with its submodule (the emulator used for the checks).
+2. **`make setup`**, once: creates a local Python environment (numpy, Pillow), builds the GNU toolchain and the emulator from source,
+   and downloads OM's firmware 1.1.
+3. **`make firmware`**: builds the update file, runs every check, and prints the two files and their hashes.
 
 `make setup` needs the network and takes a while the first time (it compiles GNU binutils and the MN103 simulator: roughly
 10 to 20 minutes); running it again skips what is done. Nothing is installed outside this folder and `~/ep7fw-toolchains`
