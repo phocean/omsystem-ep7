@@ -77,3 +77,12 @@ you used, and what you saw. Reports of failed flashes are as useful as successes
 Apache-2.0 (see [LICENSE](LICENSE)). Built on the work of cakelesscoder (Caduceus) and on fishcu's
 [`oly_fw_analysis`](https://github.com/fishcu/oly_fw_analysis) (MN103 emulator, GPL-3.0, used as a submodule for verification only).
 Details in [NOTICE](NOTICE). "Olympus", "OM SYSTEM" and "PEN" are trademarks of their owners; this project is not affiliated with them.
+
+## Other projects by the author
+
+If this firmware is useful to you, you may also like my other projects:
+
+- [Shokonotes](https://shokonotes.jcbaptiste.com): a native macOS library for your Markdown notes.
+- [Aster Photo](https://aster.jcbaptiste.com): photo software for macOS.
+
+Using and sharing them is the best way to support this work. They have nothing to do with this firmware.
