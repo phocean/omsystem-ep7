@@ -14,6 +14,7 @@
      in the 2 call words; no refs into the claim except the step-table word 0x601e3d28
   P  anti-brick: tools/build_package.build(spec) decodes to stock + edits; restore == stock
 """
+import os
 import argparse, copy, importlib.util, itertools, json, struct, subprocess, sys, tempfile
 from pathlib import Path
 
@@ -26,7 +27,7 @@ from penf_emulator import Region, execute  # noqa: E402
 
 spec_ = importlib.util.spec_from_file_location('fwv_build', Path(__file__).with_name('build.py'))
 FB = importlib.util.module_from_spec(spec_); spec_.loader.exec_module(FB)
-TC = Path.home() / 'ep7fw-toolchains/mn10300/bin'
+TC = Path(os.environ.get('EP7_TOOLCHAIN') or Path.home() / 'ep7fw-toolchains') / 'mn10300/bin'   # EP7_TOOLCHAIN = install prefix of tools/setup_toolchain.sh
 BASE, FN = 0x60020020, 0x60df5285
 OBJ, BLK, STACK, WRAP, FAKE, MEMSET = 0x18100000, 1164, 0x18010000, 0x18020000, 0x18030000, 0x4700115e
 GET_A, GET_B, LOGF = 0x607b23fb, 0x607b2dd3, 0x60e9e050

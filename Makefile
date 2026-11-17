@@ -1,13 +1,29 @@
 # Firmware builds of this fork (stock E-P7 1.1 + our patches). Nothing here flashes a camera or writes to an SD card.
+#   make setup               ONE TIME: venv + numpy, submodule, mn10300 binutils, emulator, OM's stock firmware (tools/setup.sh)
+#   make firmware            builds, verifies and prints the update file and the restore file (= make final with the venv)
 #   make stock               check (or download and verify) the official stock firmware
 #   make minimal             stock + jpeg_always + lever_nomenu            -> out/minimal/
 #   make final               minimal + lcd_tint + more button functions + version label -> out/final/
 #   make final_emu           emulator test of the jpeg_always stub inside the final image (slow)
 #   make clean               remove out/
 # If Python 3.15 cannot open network sockets on your Mac, use: make stock PY=/usr/bin/python3
-PY   ?= python3
+PY   ?= $(if $(wildcard $(CURDIR)/.venv/bin/python),$(CURDIR)/.venv/bin/python,python3)
+export EP7_TOOLCHAIN ?= $(HOME)/ep7fw-toolchains
+export PYTHON ?= $(PY)
 
-.PHONY: stock jpeg_always_stock minimal jpeg_always_stock_emu final final_nocode final_emu clean
+.PHONY: setup firmware stock jpeg_always_stock minimal jpeg_always_stock_emu final final_nocode final_emu clean
+
+setup:
+	tools/setup.sh
+
+firmware:
+	@test -x $(CURDIR)/.venv/bin/python || { echo "Run  make setup  first (one time)."; exit 1; }
+	$(MAKE) final
+	@echo
+	@echo "Update file for the SD card:  out/final/DCOLYMP/E1429999.BIN"
+	@echo "Restore file (stock firmware): out/final/restore/E1429999.BIN   (keep it on your computer)"
+	@shasum -a 256 out/final/DCOLYMP/E1429999.BIN out/final/restore/E1429999.BIN 2>/dev/null || sha256sum out/final/DCOLYMP/E1429999.BIN out/final/restore/E1429999.BIN
+	@echo "Next: copy the update file to DCOLYMP/E1429999.BIN on the SD card, see docs/INSTALL.md"
 
 stock:
 	$(PY) tools/fork_build.py stock

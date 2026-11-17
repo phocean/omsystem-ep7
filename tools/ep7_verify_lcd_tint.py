@@ -14,6 +14,7 @@
      70-B SPI command buffer as stock except the 0xd9 [mode,R,G,B] low bytes (= step_rgb), returns to the send call, no
      fault.
 """
+import os
 import argparse, json, subprocess, sys, tempfile
 import numpy as np
 from pathlib import Path
@@ -29,7 +30,7 @@ import build as LT  # noqa: E402  (patches/lcd_tint/build.py)
 
 BASE = 0x60020020
 DELTA = LT.DELTA
-TC = Path.home() / 'ep7fw-toolchains/mn10300/bin'
+TC = Path(os.environ.get('EP7_TOOLCHAIN') or Path.home() / 'ep7fw-toolchains') / 'mn10300/bin'   # EP7_TOOLCHAIN = install prefix of tools/setup_toolchain.sh
 MEMCPY = 0x47001052
 STACK = 0x20000000
 RAM = 0x62233400

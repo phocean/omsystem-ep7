@@ -31,7 +31,7 @@ from penf_emulator import execute, Region  # noqa: E402  (generic runner; no PEN
 MAIN = ROOT / 'analysis/ep7_1100/00_0100_406a0020.decoded.bin'
 MAIN_SHA = '5dd9af164b4590c7e82f6905c919b3cc450bb58f2d5742ab2a0e3a4eb2e26190'
 BASE = 0x60020020
-TC = Path(os.environ.get('MN10300_BIN', Path.home() / 'ep7fw-toolchains/mn10300/bin'))
+TC = Path(os.environ.get('MN10300_BIN') or Path(os.environ.get('EP7_TOOLCHAIN') or Path.home() / 'ep7fw-toolchains') / 'mn10300/bin')
 
 TABLE, TABLE_SIZE, GAINS = 0x6051de2c, 3028, 0x60531810
 BUILDER, SELECTOR, SELECTOR_END = 0x603b0068, 0x603b0252, 0x603b0345

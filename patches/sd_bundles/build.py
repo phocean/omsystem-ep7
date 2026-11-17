@@ -17,11 +17,12 @@ replaces the table at run time. A package with this spec but without the bundles
 tools/ep7_verify_sd_bundles.py ("requires").
 The file format is defined here (FORMAT) and written by tools/ep7_bundles_bin.py.
 """
+import os
 import argparse, hashlib, json, struct, subprocess, sys, tempfile, zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TC = Path.home() / 'ep7fw-toolchains/mn10300/bin'
+TC = Path(os.environ.get('EP7_TOOLCHAIN') or Path.home() / 'ep7fw-toolchains') / 'mn10300/bin'   # EP7_TOOLCHAIN = install prefix of tools/setup_toolchain.sh
 MAIN = ROOT / 'analysis/ep7_1100/00_0100_406a0020.decoded.bin'
 MAIN_SHA = '5dd9af164b4590c7e82f6905c919b3cc450bb58f2d5742ab2a0e3a4eb2e26190'
 LAYOUT = ROOT / 'patches/bundles/layout.json'

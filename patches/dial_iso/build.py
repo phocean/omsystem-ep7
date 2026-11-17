@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 BASE = 0x60020020
 STOCK = Path(os.environ.get('EP7_STOCK_MAIN') or ROOT / 'analysis/ep7_1100/00_0100_406a0020.decoded.bin')
-TC = Path.home() / 'ep7fw-toolchains/mn10300/bin'
+TC = Path(os.environ.get('EP7_TOOLCHAIN') or Path.home() / 'ep7fw-toolchains') / 'mn10300/bin'   # EP7_TOOLCHAIN = install prefix of tools/setup_toolchain.sh
 SRC = 'patches/dial_iso'
 
 AT, END = 0x60210900, 0x6021094c                    # stub claim (76 B)

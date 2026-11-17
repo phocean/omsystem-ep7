@@ -18,12 +18,13 @@ buffer, appends " Caduceus <ver>" and calls the real setter. An empty field is p
 the dead EVF gamma step-10 B table 0x601e1c3c (only ref: step-table word 0x601e3d28). The version numbers, the
 updater / version-check code and the EXIF Software template ("Version x.x", 0x604ddeb4) are untouched.
 """
+import os
 import argparse, json, re, struct, subprocess, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 STOCK = ROOT / 'analysis/ep7_1100/00_0100_406a0020.decoded.bin'
-TC = Path.home() / 'ep7fw-toolchains/mn10300/bin'
+TC = Path(os.environ.get('EP7_TOOLCHAIN') or Path.home() / 'ep7fw-toolchains') / 'mn10300/bin'   # EP7_TOOLCHAIN = install prefix of tools/setup_toolchain.sh
 BASE = 0x60020020
 SETTER = 0x60d4c9df                     # text setter (widget a0, wchar string a1), call [d2,d3,a2,a3],24
 SITES = {0x60d7f271: '+940 (two-version Body value, widget 26)',
