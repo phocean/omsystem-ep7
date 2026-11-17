@@ -14,7 +14,7 @@ export PYTHON ?= $(PY)
 .PHONY: setup firmware stock jpeg_always_stock minimal jpeg_always_stock_emu final final_nocode final_emu clean
 
 setup:
-	tools/setup.sh
+	env -u PYTHON tools/setup.sh
 
 firmware:
 	@test -x $(CURDIR)/.venv/bin/python || { echo "Run  make setup  first (one time)."; exit 1; }

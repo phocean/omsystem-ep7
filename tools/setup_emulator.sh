@@ -39,11 +39,24 @@ if [ ! -f "$SRC/.penf-source.json" ]; then
 J
 fi
 
-# GNU sed is needed by the simulator's generators. On macOS the BSD sed produces empty files: use gsed through a private shim.
+# The simulator's generators use GNU sed scripts. BSD sed (macOS) rejects `{...;p}` ("extra characters at the end of p command")
+# and leaves sim/common/modules.c empty. Use gsed if present, else a private shim that adds the ';' BSD sed wants before '}'.
 SHIM=$(mktemp -d)
 if ! sed --version >/dev/null 2>&1; then
   if command -v gsed >/dev/null 2>&1; then ln -s "$(command -v gsed)" "$SHIM/sed"
-  else echo "GNU sed is required to build the emulator (macOS: brew install gnu-sed)" >&2; exit 1; fi
+  else
+    cat > "$SHIM/sed" <<'SH'
+#!/bin/sh
+n=$#; i=0
+while [ "$i" -lt "$n" ]; do
+  a=$1; shift
+  case $a in *'p}'*) a=$(printf '%s' "$a" | /usr/bin/sed 's/p}/p;}/g');; esac
+  set -- "$@" "$a"; i=$((i + 1))
+done
+exec /usr/bin/sed "$@"
+SH
+    chmod +x "$SHIM/sed"
+  fi
 fi
 PATH="$SHIM:$PATH" "$PYTHON" "$SUB/tools/build_mn103_emulator.py" --jobs "$(ncpu)"
 [ -x "$BIN" ] && echo "emulator: built ($BIN)"

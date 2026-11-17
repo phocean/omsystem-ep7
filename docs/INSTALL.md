@@ -6,15 +6,16 @@
 
 ## 1. Build (on your computer)
 
+Prerequisites: `git`, `curl`, `make`, a C compiler, `gpgv`, Python 3.12+ (see the README for the install commands).
+
 ```bash
-tools/fetch_stock.sh
-tools/decode_stock.sh
-make final PYNP=/path/to/python-with-numpy
-shasum -a 256 out/final/DCOLYMP/E1429999.BIN out/final/restore/E1429999.BIN
+make setup       # once, needs the network, about 10 to 20 minutes the first time (builds the toolchain and the emulator)
+make firmware    # a few minutes: builds, verifies, prints the two files with their SHA-256
 ```
 
-The two hashes must be the ones in `docs/FINAL_BUILD.md`. Keep `out/final/restore/E1429999.BIN` on your computer: it is the
-stock firmware, to go back.
+The two hashes printed must be the ones in `docs/FINAL_BUILD.md`. Keep `out/final/restore/E1429999.BIN` on your computer: it is the
+stock firmware, to go back. To rebuild after a change, run `make firmware` again (`make setup` is not needed twice).
+`make setup` can be re-run safely: finished steps are skipped. `EP7_TOOLCHAIN=/some/dir` moves the compiler install.
 
 ## 2. Flash
 

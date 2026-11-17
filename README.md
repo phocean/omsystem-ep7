@@ -26,16 +26,20 @@ and the expected hashes are in [docs/FINAL_BUILD.md](docs/FINAL_BUILD.md).
 
 ## Quick start
 
-You need Python 3.12+, an `mn10300-elf` toolchain (`tools/setup_toolchain.sh`), the emulator submodule
-(`git submodule update --init`, see `external/oly_fw_analysis/REPRODUCING.md`) and numpy (for the LCD check).
+Two commands. You need a Mac or Linux machine with `git`, `curl`, `make`, a C compiler, `gpgv` and Python 3.12+
+(macOS: `xcode-select --install` and `brew install python@3.12 gnupg`; Debian/Ubuntu: `sudo apt install build-essential curl git python3 python3-venv gpgv xz-utils zlib1g-dev`).
 
 ```bash
-tools/fetch_stock.sh        # downloads OM's firmware 1.1 and checks its SHA-256
-tools/decode_stock.sh       # decodes it into analysis/ (not committed)
-make final PYNP=/path/to/python-with-numpy
+git clone --recurse-submodules https://github.com/phocean/omsystem-ep7.git && cd omsystem-ep7
+make setup       # once: Python environment with numpy, GNU toolchain and emulator (built from source), OM's firmware 1.1
+make firmware    # builds the update file, runs every check, prints the two files and their hashes
 ```
 
-`make final` builds the package and runs every check (module verifiers, emulator tests on the real routines, mutation tests,
+`make setup` needs the network and takes a while the first time (it compiles GNU binutils and the MN103 simulator: roughly
+10 to 20 minutes); running it again skips what is done. Nothing is installed outside this folder and `~/ep7fw-toolchains`
+(change it with `EP7_TOOLCHAIN=/some/dir make setup`).
+
+`make firmware` builds the package and runs every check (module verifiers, emulator tests on the real routines, mutation tests,
 byte-for-byte comparison with the stock). It refuses to write anything if a hash differs from the pinned one. You get:
 
 - `out/final/DCOLYMP/E1429999.BIN`: the update file for the SD card;
